@@ -1,0 +1,19 @@
+import React from 'react';
+import { ChakraProvider } from '@chakra-ui/react';
+import { BrowserRouter } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import AppRoutes from './routes/AppRoutes';
+
+function App() {
+  return (
+    <ChakraProvider>
+      <BrowserRouter>
+          <AppRoutes />
+          <ToastContainer position="top-right" autoClose={3000} />
+      </BrowserRouter>
+    </ChakraProvider>
+  );
+}
+
+export default App;
