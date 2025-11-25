@@ -9,6 +9,9 @@ const AuthService = {
     },
     verifyOtp: (otp) => {
         return axiosClient.post(`/verify-otp?otp=${otp}`);
+    },
+    logout: (refreshToken) => {
+        return axiosClient.post('/logout', { refreshToken });
     }
 };
 

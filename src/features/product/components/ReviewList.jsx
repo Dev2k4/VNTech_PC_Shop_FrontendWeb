@@ -8,25 +8,33 @@ import {
   HStack,
   Divider,
   Flex,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { StarIcon } from "@chakra-ui/icons";
 import { formatDate } from "../../../utils/format";
 
 const ReviewList = ({ reviews }) => {
+  // Color mode values
+  const cardBg = useColorModeValue("apple.lightCard", "apple.card");
+  const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
+  const textColor = useColorModeValue("apple.lightText", "white");
+  const subTextColor = useColorModeValue("apple.lightSubText", "gray.400");
+  const commentColor = useColorModeValue("gray.600", "gray.300");
+
   if (!reviews || reviews.length === 0) {
     return (
       <Box
-        bg="apple.card"
+        bg={cardBg}
         p={6}
         borderRadius="2xl"
         border="1px solid"
-        borderColor="whiteAlpha.200"
+        borderColor={borderColor}
       >
-        <Heading size="md" mb={4} color="white">
+        <Heading size="md" mb={4} color={textColor}>
           Đánh giá khách hàng (0)
         </Heading>
-        <Divider borderColor="whiteAlpha.200" mb={4} />
-        <Text color="gray.400" mb={4}>
+        <Divider borderColor={borderColor} mb={4} />
+        <Text color={subTextColor} mb={4}>
           Hãy đăng nhập và là người đầu tiên đánh giá sản phẩm này!
         </Text>
         <Button colorScheme="blue" borderRadius="full" size="sm">
@@ -40,9 +48,9 @@ const ReviewList = ({ reviews }) => {
     <VStack align="stretch" spacing={6}>
       <Heading
         size="xl"
-        color="white"
+        color={textColor}
         borderBottom="1px solid"
-        borderColor="whiteAlpha.200"
+        borderColor={borderColor}
         pb={4}
         mb={2}
       >
@@ -53,10 +61,10 @@ const ReviewList = ({ reviews }) => {
         <Box
           key={index}
           p={5}
-          bg="apple.card"
+          bg={cardBg}
           borderRadius="xl"
           border="1px solid"
-          borderColor="whiteAlpha.100"
+          borderColor={useColorModeValue("gray.100", "whiteAlpha.100")}
         >
           <Flex justify="space-between" align="center" mb={3}>
             {/* Rating stars */}
@@ -74,11 +82,11 @@ const ReviewList = ({ reviews }) => {
             </Text>
           </Flex>
 
-          <Text fontWeight="semibold" color="white" mb={2}>
+          <Text fontWeight="semibold" color={textColor} mb={2}>
             {review.user?.username || "Người dùng ẩn danh"}
           </Text>
 
-          <Text color="gray.300" fontSize="md">
+          <Text color={commentColor} fontSize="md">
             {review.comment}
           </Text>
         </Box>

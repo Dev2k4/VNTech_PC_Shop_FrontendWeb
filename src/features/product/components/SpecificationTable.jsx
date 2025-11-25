@@ -1,17 +1,23 @@
 import React from "react";
-import { Box, Table, Tbody, Tr, Td, Grid, Text } from "@chakra-ui/react";
+import { Box, Table, Tbody, Tr, Td, useColorModeValue } from "@chakra-ui/react";
 
 const SpecificationTable = ({ specifications }) => {
   if (!specifications || specifications.length === 0) return null;
 
+  // Color mode values
+  const cardBg = useColorModeValue("apple.lightCard", "apple.card");
+  const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
+  const textColor = useColorModeValue("apple.lightText", "white");
+  const subTextColor = useColorModeValue("apple.lightSubText", "gray.400");
+  const rowHoverBg = useColorModeValue("rgba(0, 0, 0, 0.03)", "rgba(255, 255, 255, 0.03)");
+
   return (
     <Box
-      Nền
-      bg="apple.card"
+      bg={cardBg}
       borderRadius="3xl"
       overflow="hidden"
       border="1px solid"
-      borderColor="whiteAlpha.200"
+      borderColor={borderColor}
       p={8}
       maxW="900px"
       mx="auto"
@@ -21,12 +27,12 @@ const SpecificationTable = ({ specifications }) => {
           {specifications.map((spec, index) => (
             <Tr
               key={index}
-              bg={index % 2 === 0 ? "transparent" : "rgba(255, 255, 255, 0.03)"}
+              bg={index % 2 === 0 ? "transparent" : rowHoverBg}
             >
               <Td
                 w="35%"
                 fontWeight="normal"
-                color="gray.400"
+                color={subTextColor}
                 border="none"
                 px={4}
                 py={3}
@@ -36,7 +42,7 @@ const SpecificationTable = ({ specifications }) => {
               <Td
                 w="65%"
                 fontWeight="semibold"
-                color="white"
+                color={textColor}
                 border="none"
                 px={4}
                 py={3}

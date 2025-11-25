@@ -11,6 +11,7 @@ import {
   InputGroup,
   InputLeftElement,
   Select,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { SearchIcon } from "@chakra-ui/icons";
 import ProductService from "../../../services/product.service";
@@ -20,6 +21,14 @@ import Pagination from "../../../components/common/Pagination";
 const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Color mode values
+  const bgColor = useColorModeValue("apple.lightBg", "apple.bg");
+  const cardBg = useColorModeValue("apple.lightCard", "apple.card");
+  const cardHoverBg = useColorModeValue("apple.lightCardHover", "apple.cardHover");
+  const textColor = useColorModeValue("apple.lightText", "apple.text");
+  const subTextColor = useColorModeValue("apple.lightSubText", "apple.subText");
+  const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
 
   // State phân trang & lọc
   const [filters, setFilters] = useState({
@@ -65,14 +74,17 @@ const HomePage = () => {
   };
 
   return (
-    <Box bg="apple.bg" minH="100vh">
+    <Box bg={bgColor} minH="100vh">
       {/* Hero Section */}
       <Box
         py={20}
         textAlign="center"
-        bgGradient="linear(to-b, apple.bg, apple.card)"
+        bgGradient={useColorModeValue(
+          "linear(to-b, apple.lightBg, apple.lightCard)",
+          "linear(to-b, apple.bg, apple.card)"
+        )}
         borderBottom="1px solid"
-        borderColor="whiteAlpha.200"
+        borderColor={borderColor}
       >
         <Container maxW="container.lg">
           <Heading
@@ -85,7 +97,7 @@ const HomePage = () => {
           >
             VNTech Store.
           </Heading>
-          <Text fontSize="2xl" color="apple.subText" maxW="600px" mx="auto">
+          <Text fontSize="2xl" color={subTextColor} maxW="600px" mx="auto">
             Cách tốt nhất để mua các sản phẩm công nghệ yêu thích của bạn.
           </Text>
         </Container>
@@ -99,7 +111,7 @@ const HomePage = () => {
           wrap="wrap"
           gap={4}
         >
-          <Heading size="lg" color="white">
+          <Heading size="lg" color={textColor}>
             Sản phẩm mới
           </Heading>
 
@@ -110,11 +122,11 @@ const HomePage = () => {
               </InputLeftElement>
               <Input
                 placeholder="Tìm kiếm..."
-                bg="apple.card"
+                bg={cardBg}
                 border="none"
-                color="white"
+                color={textColor}
                 _focus={{
-                  bg: "apple.cardHover",
+                  bg: cardHoverBg,
                   ring: 2,
                   ringColor: "apple.blue",
                 }}
@@ -132,9 +144,9 @@ const HomePage = () => {
 
             <Select
               w="150px"
-              bg="apple.card"
+              bg={cardBg}
               border="none"
-              color="white"
+              color={textColor}
               borderRadius="full"
               cursor="pointer"
               _focus={{ ring: 2, ringColor: "apple.blue" }}
@@ -163,12 +175,12 @@ const HomePage = () => {
               size="xl"
               color="apple.blue"
               thickness="4px"
-              emptyColor="gray.700"
+              emptyColor={useColorModeValue("gray.200", "gray.700")}
             />
           </Flex>
         ) : products.length === 0 ? (
           <Box textAlign="center" py={5}>
-            <Text fontSize="xl" color="gray.500">
+            <Text fontSize="xl" color={subTextColor}>
               Không tìm thấy sản phẩm nào.
             </Text>
           </Box>

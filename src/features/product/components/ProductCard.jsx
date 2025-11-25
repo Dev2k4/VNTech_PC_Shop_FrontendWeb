@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Image, Text, Button, Flex, VStack } from "@chakra-ui/react";
+import { Box, Image, Text, Button, Flex, VStack, useColorModeValue } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "../../../utils/format";
 
@@ -12,16 +12,25 @@ const ProductCard = ({ product }) => {
       : "https://via.placeholder.com/300";
   const isOutOfStock = stock <= 0;
 
+  // Color mode values
+  const cardBg = useColorModeValue("apple.lightCard", "apple.card");
+  const cardHoverBg = useColorModeValue("apple.lightCardHover", "apple.cardHover");
+  const textColor = useColorModeValue("apple.lightText", "white");
+  const imageBg = useColorModeValue("gray.100", "#040404");
+
   return (
     <Box
-      bg="apple.card"
+      bg={cardBg}
       borderRadius="2xl"
       overflow="hidden"
       transition="all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)"
       _hover={{
         transform: "scale(1.1)",
-        bg: "apple.cardHover",
-        boxShadow: "0 15px 20px rgba(178, 178, 178, 0.53)",
+        bg: cardHoverBg,
+        boxShadow: useColorModeValue(
+          "0 15px 20px rgba(0, 0, 0, 0.1)",
+          "0 15px 20px rgba(178, 178, 178, 0.53)"
+        ),
       }}
       position="relative"
       h="420px"
@@ -38,7 +47,7 @@ const ProductCard = ({ product }) => {
           align="center"
           justify="center"
           p={5}
-          bg="#040404"
+          bg={imageBg}
           position="relative"
         >
           <Image
@@ -53,7 +62,7 @@ const ProductCard = ({ product }) => {
           />
         </Flex>
 
-        <VStack p={5} align="center" spacing={1} bg="apple.card" zIndex="1">
+        <VStack p={5} align="center" spacing={1} bg={cardBg} zIndex="1">
           <Text
             fontSize="xsm"
             fontWeight="bold"
@@ -66,7 +75,7 @@ const ProductCard = ({ product }) => {
           <Text
             fontSize="md"
             fontWeight="600"
-            color="white"
+            color={textColor}
             textAlign="center"
             noOfLines={2}
             h="48px"
@@ -75,7 +84,7 @@ const ProductCard = ({ product }) => {
           </Text>
 
           <Flex align="baseline" gap={2} mt={1}>
-            <Text fontSize="lg" fontWeight="bold" color="white">
+            <Text fontSize="lg" fontWeight="bold" color={textColor}>
               {formatCurrency(salePrice)}
             </Text>
             {originalPrice > salePrice && (
