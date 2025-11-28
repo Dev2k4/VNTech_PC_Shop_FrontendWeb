@@ -15,10 +15,7 @@ import {
   Spinner,
   Divider,
   useToast,
-  Table,
-  Tbody,
-  Tr,
-  Td,
+  useColorModeValue,
 } from "@chakra-ui/react";
 import { StarIcon } from "@chakra-ui/icons";
 import ProductService from "../../../services/product.service";
@@ -34,6 +31,15 @@ const ProductDetailPage = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const { addToCart } = useCart();
   const toast = useToast();
+
+  // Color mode values
+  const bgColor = useColorModeValue("apple.lightBg", "apple.bg");
+  const cardBg = useColorModeValue("apple.lightCard", "apple.card");
+  const textColor = useColorModeValue("apple.lightText", "white");
+  const subTextColor = useColorModeValue("apple.lightSubText", "gray.400");
+  const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
+  const imageContainerBg = useColorModeValue("gray.100", "black");
+  const selectedBorderColor = useColorModeValue("apple.blue", "apple.blue");
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -72,34 +78,29 @@ const ProductDetailPage = () => {
     );
   if (!product)
     return (
-      <Box p={10} color="white">
+      <Box p={10} color={textColor}>
         Sản phẩm không tồn tại
       </Box>
     );
 
-  const productSpecs = product.specifications || [];
-  const productReviews = product.reviews || [];
   return (
-    <Box bg="apple.bg" minH="100vh" py={10} color="white">
-      {" "}
+    <Box bg={bgColor} minH="100vh" py={10} color={textColor}>
       <Container maxW="container.xl">
-        {" "}
         <Grid
           templateColumns={{ base: "1fr", md: "1.5fr 1fr" }}
           gap={12}
           mb={20}
         >
-          {" "}
           <Box>
             <Flex
-              bg="black"
+              bg={imageContainerBg}
               borderRadius="3xl"
               h={{ base: "300px", md: "500px" }}
               align="center"
               justify="center"
               mb={4}
               border="1px solid"
-              borderColor="whiteAlpha.200"
+              borderColor={borderColor}
             >
               <Image
                 src={selectedImage || "https://via.placeholder.com/500"}
@@ -107,7 +108,7 @@ const ProductDetailPage = () => {
                 maxH="80%"
                 borderRadius="xl"
                 objectFit="contain"
-                filter="drop-shadow(0 0 20px rgba(255,255,255,0.1))"
+                filter={useColorModeValue("none", "drop-shadow(0 0 20px rgba(255,255,255,0.1))")}
               />
             </Flex>
             <HStack spacing={4} overflowX="auto" py={2}>
@@ -120,10 +121,10 @@ const ProductDetailPage = () => {
                   border="2px solid"
                   borderColor={
                     selectedImage === img.imageUrl
-                      ? "apple.blue"
+                      ? selectedBorderColor
                       : "transparent"
                   }
-                  bg="apple.card"
+                  bg={cardBg}
                   cursor="pointer"
                   onClick={() => setSelectedImage(img.imageUrl)}
                   p={2}
@@ -138,8 +139,8 @@ const ProductDetailPage = () => {
                   />
                 </Box>
               ))}
-            </HStack>{" "}
-          </Box>{" "}
+            </HStack>
+          </Box>
           <Box>
             <VStack
               align="stretch"
@@ -158,35 +159,35 @@ const ProductDetailPage = () => {
                   {product.brand || "New"}
                 </Text>
 
-                <Heading as="h1" size="xl" mt={1} mb={1} fontWeight="700">
+                <Heading as="h1" size="xl" mt={1} mb={1} fontWeight="700" color={textColor}>
                   {product.productName}
                 </Heading>
 
                 <HStack>
-                  <StarIcon color="yellow.400" />{" "}
-                  <Text fontSize="xsm" color="gray.400">
+                  <StarIcon color="yellow.400" />
+                  <Text fontSize="xsm" color={subTextColor}>
                     5.0 (10 đánh giá)
                   </Text>
                 </HStack>
               </Box>
 
               <Box>
-                <Text fontSize="3xl" fontWeight="bold" color="white">
+                <Text fontSize="3xl" fontWeight="bold" color={textColor}>
                   {formatCurrency(product.salePrice)}
                 </Text>
                 {product.originalPrice > product.salePrice && (
-                  <Text textDecoration="line-through" color="gray.500">
+                  <Text textDecoration="line-through" color={subTextColor}>
                     {formatCurrency(product.originalPrice)}
                   </Text>
                 )}
               </Box>
-              <Divider borderColor="whiteAlpha.200" />
+              <Divider borderColor={borderColor} />
               <Box>
-                <Heading size="sm" mb={3} color="gray.300">
+                <Heading size="sm" mb={3} color={subTextColor}>
                   Mô tả
                 </Heading>
 
-                <Text color="gray.400" lineHeight="1.8">
+                <Text color={subTextColor} lineHeight="1.8">
                   {product.description}
                 </Text>
               </Box>
@@ -203,7 +204,7 @@ const ProductDetailPage = () => {
                 >
                   Thêm vào Giỏ hàng
                 </Button>
-                <Text mt={3} textAlign="center" fontSize="xs" color="gray.500">
+                <Text mt={3} textAlign="center" fontSize="xs" color={subTextColor}>
                   Giao hàng miễn phí. Đổi trả trong 15 ngày.
                 </Text>
               </Box>
@@ -215,14 +216,14 @@ const ProductDetailPage = () => {
           gap={12}
           mt={20}
           borderTop="1px solid"
-          borderColor="whiteAlpha.200"
+          borderColor={borderColor}
           pt={16}
         >
           <Box>
             {product.specifications && product.specifications.length > 0 ? (
               <SpecificationTable specifications={product.specifications} />
             ) : (
-              <Text color="gray.500">
+              <Text color={subTextColor}>
                 Thông số kỹ thuật đang được cập nhật.
               </Text>
             )}
@@ -231,8 +232,8 @@ const ProductDetailPage = () => {
           <Box>
             <ReviewList reviews={product.reviews} />
           </Box>
-        </Grid>{" "}
-      </Container>{" "}
+        </Grid>
+      </Container>
     </Box>
   );
 };
