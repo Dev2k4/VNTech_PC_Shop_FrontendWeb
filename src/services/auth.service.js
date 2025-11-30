@@ -12,7 +12,11 @@ const AuthService = {
     },
     logout: (refreshToken) => {
         return axiosClient.post('/logout', { refreshToken });
-    }
+    },
+    getProfile: () => {
+    return axiosClient.get("/user/profile");
+  },
+    
 };
 
 export default AuthService;

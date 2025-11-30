@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flex, useToast } from '@chakra-ui/react';
+import { Flex, useToast, useColorModeValue } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../../../services/auth.service';
 import RegisterForm from '../components/RegisterForm';
@@ -8,14 +8,14 @@ import OtpForm from '../components/OtpForm';
 const RegisterPage = () => {
     const navigate = useNavigate();
     const toast = useToast();
-    
-    // Step 1: Form Đăng ký. Step 2: Form OTP
     const [step, setStep] = useState(1); 
     const [isLoading, setIsLoading] = useState(false);
-    
-    // Lưu data để gửi lại OTP
     const [savedFormData, setSavedFormData] = useState(null); 
     const [registeredEmail, setRegisteredEmail] = useState('');
+
+    // --- FIX DARK MODE BACKGROUND ---
+    const bg = useColorModeValue("gray.50", "gray.900");
+    // --------------------------------
 
     const handleRegister = async (formData) => {
         setIsLoading(true);
@@ -24,11 +24,10 @@ const RegisterPage = () => {
             
             setRegisteredEmail(formData.email);
             setSavedFormData(formData); 
-            setStep(2); // Chuyển sang bước nhập OTP (Use Case Step 4)
+            setStep(2); 
 
             toast({ title: "Đăng ký thành công", description: "Mã OTP đã được gửi vào email của bạn.", status: "success", duration: 5000 });
         } catch (error) {
-            // Xử lý lỗi (Tài khoản đã tồn tại, thông tin không hợp lệ - Use Case 4a, 4c)
             const errorMsg = error.response?.data?.message || "Đăng ký thất bại";
             toast({ title: "Lỗi", description: errorMsg, status: "error", duration: 3000 });
         } finally {
@@ -37,10 +36,8 @@ const RegisterPage = () => {
     };
 
     const handleResendOtp = async () => {
-        if (!savedFormData) return; // Bảo vệ: Không gửi nếu chưa có data
-        
+        if (!savedFormData) return;
         try {
-            // Gọi lại API Register để Backend tự gửi OTP mới
             await AuthService.register(savedFormData); 
             toast({ title: "Đã gửi lại", description: "Mã OTP mới đã được gửi vào email.", status: "info", duration: 3000 });
         } catch (error) {
@@ -52,14 +49,9 @@ const RegisterPage = () => {
         setIsLoading(true);
         try {
             await AuthService.verifyOtp(otp);
-
             toast({ title: "Xác thực thành công", description: "Tài khoản đã kích hoạt.", status: "success" });
-            
-            // Use Case Step 6: Chuyển sang trang đăng nhập
             navigate('/login');
-
         } catch (error) {
-            // Use Case 6a: Mã OTP không hợp lệ
             toast({ title: "Xác thực thất bại", description: error.response?.data?.message || "OTP không đúng", status: "error" });
         } finally {
             setIsLoading(false);
@@ -67,7 +59,7 @@ const RegisterPage = () => {
     };
 
     return (
-        <Flex minH="100vh" align="center" justify="center" bg="gray.50">
+        <Flex minH="100vh" align="center" justify="center" bg={bg}>
             {step === 1 ? (
                 <RegisterForm onSubmit={handleRegister} isLoading={isLoading} />
             ) : (

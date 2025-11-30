@@ -1,22 +1,36 @@
 import React from "react";
-import { Box, Image, Text, Button, Flex, VStack, useColorModeValue } from "@chakra-ui/react";
+import { Box, Image, Text, Button, Flex, VStack, useColorModeValue, useToast } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "../../../utils/format";
+import { useCart } from "../../../context/CartContext"; // <--- QUAN TRỌNG: Thêm dòng này
 
 const ProductCard = ({ product }) => {
-  const { id, productName, salePrice, originalPrice, brand, stock, images } =
-    product;
-  const displayImage =
-    images && images.length > 0
-      ? images[0].imageUrl
-      : "https://via.placeholder.com/300";
+  const { id, productName, salePrice, originalPrice, brand, stock, images } = product;
+  const displayImage = images && images.length > 0 ? images[0].imageUrl : "https://via.placeholder.com/300";
   const isOutOfStock = stock <= 0;
+
+  // Lấy hàm addToCart từ Context
+  const { addToCart } = useCart();
+  const toast = useToast();
 
   // Color mode values
   const cardBg = useColorModeValue("apple.lightCard", "apple.card");
   const cardHoverBg = useColorModeValue("apple.lightCardHover", "apple.cardHover");
   const textColor = useColorModeValue("apple.lightText", "white");
   const imageBg = useColorModeValue("gray.100", "#040404");
+
+  // Hàm xử lý khi bấm nút Mua ngay
+  const handleBuyNow = async (e) => {
+    e.preventDefault(); // Ngăn chặn thẻ Link bao ngoài (nếu có) chuyển trang
+    e.stopPropagation(); // Ngăn chặn sự kiện nổi bọt
+
+    if (isOutOfStock) {
+        toast({ title: "Sản phẩm đã hết hàng", status: "warning" });
+        return;
+    }
+
+    await addToCart(product.id, 1);
+  };
 
   return (
     <Box
@@ -99,6 +113,8 @@ const ProductCard = ({ product }) => {
           </Flex>
         </VStack>
       </Link>
+      
+      {/* Nút Mua ngay */}
       <Box p={5} pt={0} display="flex" justifyContent="center">
         <Button
           variant="solid"
@@ -109,7 +125,7 @@ const ProductCard = ({ product }) => {
           px={6}
           _hover={{ bg: "blue.400" }}
           isDisabled={isOutOfStock}
-          onClick={() => alert("Đã thêm")}
+          onClick={handleBuyNow} // Gọi hàm ở đây
         >
           Mua ngay
         </Button>

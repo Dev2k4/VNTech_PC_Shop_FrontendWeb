@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import {
-    Box, Button, FormControl, FormLabel, Input, VStack, Text, HStack
+    Box, Button, FormControl, FormLabel, Input, VStack, Text, HStack, useColorModeValue
 } from '@chakra-ui/react';
 
 const OtpForm = ({ onSubmit, onResend, email, isLoading }) => {
     const [otp, setOtp] = useState('');
+
+    // --- FIX DARK MODE ---
+    const bg = useColorModeValue("white", "gray.800");
+    const textColor = useColorModeValue("gray.800", "white");
+    const borderColor = useColorModeValue("gray.200", "gray.600");
+    // ---------------------
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -12,17 +18,25 @@ const OtpForm = ({ onSubmit, onResend, email, isLoading }) => {
     };
 
     return (
-        <Box bg="white" p={8} rounded="lg" shadow="lg" w={{ base: "90%", md: "400px" }} borderWidth="1px">
+        <Box 
+            bg={bg} 
+            p={8} 
+            rounded="lg" 
+            shadow="lg" 
+            w={{ base: "90%", md: "400px" }} 
+            borderWidth="1px"
+            borderColor={borderColor}
+        >
             <VStack spacing={4} as="form" onSubmit={handleSubmit}>
-                <Text fontSize="xl" fontWeight="bold" color="green.600">Xác thực tài khoản</Text>
+                <Text fontSize="xl" fontWeight="bold" color="green.500">Xác thực tài khoản</Text>
                 
-                <Text fontSize="sm" color="gray.600" textAlign="center">
+                <Text fontSize="sm" color={useColorModeValue("gray.600", "gray.300")} textAlign="center">
                     Mã OTP đã gửi đến: <br/>
-                    <Text as="span" fontWeight="bold" color="blue.600">{email || "Email của bạn"}</Text>
+                    <Text as="span" fontWeight="bold" color="blue.500">{email || "Email của bạn"}</Text>
                 </Text>
 
                 <FormControl isRequired>
-                    <FormLabel>Nhập mã OTP</FormLabel>
+                    <FormLabel color={textColor}>Nhập mã OTP</FormLabel>
                     <Input 
                         value={otp} 
                         onChange={(e) => setOtp(e.target.value)} 
@@ -32,6 +46,7 @@ const OtpForm = ({ onSubmit, onResend, email, isLoading }) => {
                         letterSpacing="4px"
                         maxLength={6}
                         autoFocus
+                        color={textColor}
                     />
                 </FormControl>
 
@@ -50,7 +65,7 @@ const OtpForm = ({ onSubmit, onResend, email, isLoading }) => {
                         size="sm" 
                         variant="link" 
                         colorScheme="blue"
-                        onClick={onResend} // Gọi hàm gửi lại từ Page
+                        onClick={onResend} 
                         isDisabled={isLoading}
                         fontWeight="normal"
                     >

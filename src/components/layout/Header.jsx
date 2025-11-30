@@ -20,22 +20,20 @@ import {
   useColorMode,
   useColorModeValue,
   Tooltip,
-  Slide,
-  VStack,
 } from "@chakra-ui/react";
-import { Link, useNavigate } from "react-router-dom";
-import { 
-  FaApple, 
-  FaSearch, 
-  FaShoppingBag, 
-  FaBars, 
-  FaUser, 
-  FaSignOutAlt, 
+import { Link, useNavigate } from "react-router-dom"; // Import Link từ react-router-dom
+import {
+  FaApple,
+  FaSearch,
+  FaShoppingBag,
+  FaBars,
+  FaUser,
+  FaSignOutAlt,
   FaHistory,
   FaMoon,
   FaSun,
   FaChevronDown,
-  FaCog
+  FaCog,
 } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import ProductService from "../../services/product.service";
@@ -53,7 +51,7 @@ const Header = () => {
 
   // Colors based on color mode
   const bgColor = useColorModeValue(
-    isScrolled ? "white" : "rgba(255, 255, 255, 0.95)", 
+    isScrolled ? "white" : "rgba(255, 255, 255, 0.95)",
     isScrolled ? "gray.900" : "rgba(22, 22, 23, 0.95)"
   );
   const borderColor = useColorModeValue("gray.200", "gray.700");
@@ -65,23 +63,17 @@ const Header = () => {
   const dropdownItemHover = useColorModeValue("gray.50", "gray.700");
   const badgeColor = useColorModeValue("red.500", "red.300");
 
-  // Scroll effect
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await ProductService.getCategories();
-        if (res?.success) {
-          setCategories(res.data);
-        }
+        if (res?.success) setCategories(res.data);
       } catch (error) {
         console.error("Lỗi lấy danh mục:", error);
       }
@@ -89,36 +81,28 @@ const Header = () => {
     fetchCategories();
   }, []);
 
-  // Check user login status
   useEffect(() => {
     const checkUserLogin = () => {
       const token = localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
       const role = localStorage.getItem("role");
       const userName = localStorage.getItem("userName") || "Thành viên";
-      
+
       if (token && userId) {
-        setUser({
-          id: userId,
-          role: role,
-          name: userName,
-        });
+        setUser({ id: userId, role, name: userName });
       } else {
         setUser(null);
       }
     };
-    
     checkUserLogin();
-    window.addEventListener('storage', checkUserLogin);
-    return () => window.removeEventListener('storage', checkUserLogin);
+    window.addEventListener("storage", checkUserLogin);
+    return () => window.removeEventListener("storage", checkUserLogin);
   }, []);
 
   const handleLogout = async () => {
     try {
       const refreshToken = localStorage.getItem("refreshToken");
-      if (refreshToken) {
-        await AuthService.logout(refreshToken);
-      }
+      if (refreshToken) await AuthService.logout(refreshToken);
     } catch (error) {
       console.log("Lỗi logout server", error);
     } finally {
@@ -150,10 +134,8 @@ const Header = () => {
     >
       <Container maxW="container.xl" px={{ base: 4, md: 6 }}>
         <Flex h="64px" align="center" justify="space-between">
-          
-          {/* Left: Mobile Menu & Logo */}
+          {/* LEFT: Logo & Menu */}
           <Flex align="center" gap={{ base: 2, lg: 8 }}>
-            {/* Mobile Menu */}
             <IconButton
               display={{ base: "flex", lg: "none" }}
               icon={<FaBars />}
@@ -163,20 +145,19 @@ const Header = () => {
               size="sm"
             />
 
-            {/* Logo */}
-            <ChakraLink 
-              as={Link} 
-              to="/" 
+            <ChakraLink
+              as={Link}
+              to="/"
               display="flex"
               alignItems="center"
               _hover={{ transform: "scale(1.05)" }}
               transition="transform 0.2s"
             >
               <Icon as={FaApple} color={textColor} w={6} h={6} />
-              <Text 
-                ml={2} 
-                fontSize="xl" 
-                fontWeight="bold" 
+              <Text
+                ml={2}
+                fontSize="xl"
+                fontWeight="bold"
                 color={textColor}
                 display={{ base: "none", sm: "block" }}
               >
@@ -184,7 +165,6 @@ const Header = () => {
               </Text>
             </ChakraLink>
 
-            {/* Desktop Navigation */}
             <Flex
               display={{ base: "none", lg: "flex" }}
               gap={6}
@@ -198,13 +178,11 @@ const Header = () => {
                 fontWeight="500"
                 color={textColor}
                 _hover={{ color: hoverColor, textDecoration: "none" }}
-                transition="color 0.2s"
                 py={2}
               >
                 Cửa hàng
               </ChakraLink>
 
-              {/* Categories Dropdown */}
               {categories.length > 0 && (
                 <Menu>
                   <MenuButton
@@ -222,8 +200,8 @@ const Header = () => {
                   >
                     Danh mục
                   </MenuButton>
-                  <MenuList 
-                    bg={dropdownBg} 
+                  <MenuList
+                    bg={dropdownBg}
                     borderColor={dropdownBorder}
                     minW="220px"
                     boxShadow="xl"
@@ -239,7 +217,6 @@ const Header = () => {
                         color={textColor}
                         fontSize="14px"
                         py={2}
-                        transition="all 0.2s"
                       >
                         {cat.categoryName}
                       </MenuItem>
@@ -250,10 +227,9 @@ const Header = () => {
             </Flex>
           </Flex>
 
-          {/* Right Actions */}
+          {/* RIGHT: Actions */}
           <Flex gap={2} align="center">
-            {/* Theme Toggle */}
-            <Tooltip label={`Chế độ ${colorMode === 'light' ? 'tối' : 'sáng'}`}>
+            <Tooltip label={`Chế độ ${colorMode === "light" ? "tối" : "sáng"}`}>
               <IconButton
                 icon={colorMode === "light" ? <FaMoon /> : <FaSun />}
                 onClick={toggleColorMode}
@@ -265,19 +241,6 @@ const Header = () => {
               />
             </Tooltip>
 
-            {/* Search */}
-            <Tooltip label="Tìm kiếm">
-              <IconButton
-                icon={<FaSearch />}
-                variant="ghost"
-                color={iconColor}
-                size="sm"
-                aria-label="Search"
-                _hover={{ color: hoverColor, bg: dropdownItemHover }}
-              />
-            </Tooltip>
-
-            {/* Cart */}
             <Tooltip label="Giỏ hàng">
               <Box position="relative">
                 <IconButton
@@ -313,11 +276,10 @@ const Header = () => {
               </Box>
             </Tooltip>
 
-            {/* User Section */}
             {user ? (
               <Menu>
-                <MenuButton 
-                  as={Button} 
+                <MenuButton
+                  as={Button}
                   variant="ghost"
                   rounded="full"
                   p={1}
@@ -325,15 +287,15 @@ const Header = () => {
                   _hover={{ bg: dropdownItemHover }}
                 >
                   <HStack spacing={2}>
-                    <Avatar 
-                      size="sm" 
+                    <Avatar
+                      size="sm"
                       name={user.name}
                       bg="blue.500"
                       color="white"
                       fontSize="xs"
                     />
-                    <Text 
-                      fontSize="sm" 
+                    <Text
+                      fontSize="sm"
                       color={textColor}
                       display={{ base: "none", md: "block" }}
                     >
@@ -341,8 +303,8 @@ const Header = () => {
                     </Text>
                   </HStack>
                 </MenuButton>
-                <MenuList 
-                  bg={dropdownBg} 
+                <MenuList
+                  bg={dropdownBg}
                   borderColor={dropdownBorder}
                   boxShadow="2xl"
                   minW="200px"
@@ -355,15 +317,15 @@ const Header = () => {
                       {user.name}
                     </Text>
                   </Box>
-                  
+
                   <MenuDivider borderColor={dropdownBorder} />
-                  
-                  {user.role === 'ADMIN' && (
-                    <MenuItem 
+
+                  {user.role === "ADMIN" && (
+                    <MenuItem
                       icon={<FaCog />}
                       _hover={{ bg: dropdownItemHover }}
                       color={textColor}
-                      as={Link} 
+                      as={Link}
                       to="/admin"
                       fontSize="14px"
                       py={3}
@@ -371,30 +333,36 @@ const Header = () => {
                       Trang quản trị
                     </MenuItem>
                   )}
-                  
-                  <MenuItem 
+
+                  {/* --- ĐÂY LÀ CHỖ ĐÃ ĐƯỢC SỬA --- */}
+                  <MenuItem
                     icon={<FaUser />}
                     _hover={{ bg: dropdownItemHover }}
                     color={textColor}
                     fontSize="14px"
                     py={3}
+                    as={Link}
+                    to="/profile" // <--- Link tới trang hồ sơ
                   >
                     Hồ sơ cá nhân
                   </MenuItem>
-                  
-                  <MenuItem 
+
+                  <MenuItem
                     icon={<FaHistory />}
                     _hover={{ bg: dropdownItemHover }}
                     color={textColor}
                     fontSize="14px"
                     py={3}
+                    as={Link}
+                    to="/user/orders" // <--- Link tới lịch sử đơn hàng
                   >
                     Lịch sử đơn hàng
                   </MenuItem>
-                  
+                  {/* ----------------------------- */}
+
                   <MenuDivider borderColor={dropdownBorder} />
-                  
-                  <MenuItem 
+
+                  <MenuItem
                     icon={<FaSignOutAlt />}
                     _hover={{ bg: "red.50", color: "red.600" }}
                     color="red.500"
@@ -408,23 +376,23 @@ const Header = () => {
               </Menu>
             ) : (
               <HStack spacing={3}>
-                <Button 
-                  as={Link} 
-                  to="/login" 
-                  size="sm" 
-                  variant="ghost" 
-                  color={textColor} 
+                <Button
+                  as={Link}
+                  to="/login"
+                  size="sm"
+                  variant="ghost"
+                  color={textColor}
                   _hover={{ bg: dropdownItemHover }}
                   fontSize="14px"
                 >
                   Đăng nhập
                 </Button>
-                <Button 
-                  as={Link} 
-                  to="/register" 
-                  size="sm" 
-                  bg="blue.500" 
-                  color="white" 
+                <Button
+                  as={Link}
+                  to="/register"
+                  size="sm"
+                  bg="blue.500"
+                  color="white"
                   _hover={{ bg: "blue.600", transform: "translateY(-1px)" }}
                   _active={{ transform: "translateY(0)" }}
                   borderRadius="md"
