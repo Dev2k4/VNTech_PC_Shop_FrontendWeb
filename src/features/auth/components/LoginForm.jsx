@@ -7,11 +7,9 @@ import { Link } from 'react-router-dom';
 const LoginForm = ({ onSubmit, isLoading }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
 
-    // --- FIX DARK MODE ---
     const bg = useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.800", "white");
     const borderColor = useColorModeValue("gray.200", "gray.600");
-    // ---------------------
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });

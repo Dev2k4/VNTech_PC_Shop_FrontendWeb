@@ -14,7 +14,6 @@ const AdminOrderPage = () => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const toast = useToast();
 
-    // Enum status cho BE
     const ORDER_STATUSES = [
         { value: 'PENDING', label: 'Chờ xác nhận', color: 'yellow' },
         { value: 'CONFIRMED', label: 'Đã xác nhận', color: 'blue' },
@@ -26,7 +25,7 @@ const AdminOrderPage = () => {
     const fetchOrders = async () => {
         try {
             const res = await AdminService.getAllOrders({ page: 0, size: 50 });
-            if (res.success) setOrders(res.data.content || []); // data là PageResponse
+            if (res.success) setOrders(res.data.content || []); 
         } catch (error) {
             console.error(error);
         }

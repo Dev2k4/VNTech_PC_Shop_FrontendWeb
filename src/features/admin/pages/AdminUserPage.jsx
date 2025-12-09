@@ -39,7 +39,6 @@ const AdminUserPage = () => {
         <Box bg={bg} p={6} borderRadius="lg" shadow="sm">
             <Flex justify="space-between" align="center" mb={6}>
                 <Heading size="md">Quản lý Người dùng</Heading>
-                {/* Nút thêm mới có thể dẫn tới trang Register hoặc mở Modal nếu cần */}
             </Flex>
 
             <Table variant="simple">
@@ -76,7 +75,7 @@ const AdminUserPage = () => {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleDeleteUser(user.id)}
-                                    isDisabled={user.roleName === 'ADMIN'} // Không cho xóa Admin khác
+                                    isDisabled={user.roleName === 'ADMIN'} 
                                 />
                             </Td>
                         </Tr>

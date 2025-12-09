@@ -5,7 +5,6 @@ import { FaHome, FaBox, FaList, FaShoppingCart, FaUsers, FaChartBar } from 'reac
 
 const NavItem = ({ icon, children, to }) => {
   const location = useLocation();
-  // Kiểm tra xem route hiện tại có bắt đầu bằng path của item không (để active menu con)
   const isActive = location.pathname === to || (to !== '/admin' && location.pathname.startsWith(to));
   
   const activeBg = useColorModeValue('blue.500', 'blue.200');

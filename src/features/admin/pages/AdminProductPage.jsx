@@ -18,7 +18,6 @@ const AdminProductPage = () => {
     const [currentProduct, setCurrentProduct] = useState(null);
     const toast = useToast();
 
-    // Form state
     const [formData, setFormData] = useState({
         productName: '',
         description: '',
@@ -33,12 +32,11 @@ const AdminProductPage = () => {
 
     const bg = useColorModeValue('white', 'gray.800');
 
-    // Load sản phẩm và danh mục
     const fetchData = async () => {
         setLoading(true);
         try {
             const [prodRes, catRes] = await Promise.all([
-                ProductService.getAll({ size: 100 }), // Lấy tạm 100 sp
+                ProductService.getAll({ size: 100 }),  
                 ProductService.getCategories()
             ]);
             
@@ -55,7 +53,6 @@ const AdminProductPage = () => {
         fetchData();
     }, []);
 
-    // Xử lý mở modal (Thêm hoặc Sửa)
     const handleOpenModal = (product = null) => {
         if (product) {
             setCurrentProduct(product);
@@ -87,7 +84,6 @@ const AdminProductPage = () => {
 
     const handleSubmit = async () => {
         try {
-            // Validate sơ bộ
             if (!formData.productName || !formData.salePrice || !formData.categoryId) {
                 toast({ title: 'Vui lòng điền các trường bắt buộc (*)', status: 'warning' });
                 return;

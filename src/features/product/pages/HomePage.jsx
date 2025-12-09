@@ -22,7 +22,6 @@ const HomePage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Color mode values
   const bgColor = useColorModeValue("apple.lightBg", "apple.bg");
   const cardBg = useColorModeValue("apple.lightCard", "apple.card");
   const cardHoverBg = useColorModeValue("apple.lightCardHover", "apple.cardHover");
@@ -30,10 +29,9 @@ const HomePage = () => {
   const subTextColor = useColorModeValue("apple.lightSubText", "apple.subText");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
 
-  // State phân trang & lọc
   const [filters, setFilters] = useState({
     page: 0,
-    size: 8, // Bạn có thể chỉnh số này nhỏ xuống (vd: 1) để test phân trang nếu ít sản phẩm
+    size: 8,  
     productName: "",
     sortBy: "createdAt",
     sortDirection: "desc",
@@ -41,7 +39,6 @@ const HomePage = () => {
 
   const [totalPages, setTotalPages] = useState(0);
 
-  // Gọi API lấy sản phẩm
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -65,7 +62,6 @@ const HomePage = () => {
     return () => clearTimeout(timer);
   }, [filters]);
 
-  // Hàm chuyển trang
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < totalPages) {
       setFilters((prev) => ({ ...prev, page: newPage }));
@@ -75,7 +71,6 @@ const HomePage = () => {
 
   return (
     <Box bg={bgColor} minH="100vh">
-      {/* Hero Section */}
       <Box
         py={20}
         textAlign="center"

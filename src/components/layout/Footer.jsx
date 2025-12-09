@@ -65,7 +65,6 @@ export default function Footer() {
       <Container as={Stack} maxW={'container.xl'} py={10}>
         <SimpleGrid columns={{ base: 1, sm: 2, md: 4 }} spacing={8}>
           
-          {/* Cột 1: Brand */}
           <Stack spacing={6}>
             <Flex align="center" gap={2}>
                <Icon as={FaApple} w={6} h={6} color={useColorModeValue("black", "white")}/>
@@ -76,7 +75,6 @@ export default function Footer() {
             </Text>
           </Stack>
 
-          {/* Cột 2: Sản phẩm */}
           <Stack align={'flex-start'}>
             <ListHeader>Sản phẩm</ListHeader>
             <Link href={'/'} _hover={{ color: 'blue.500' }}>MacBook</Link>
@@ -85,7 +83,6 @@ export default function Footer() {
             <Link href={'/'} _hover={{ color: 'blue.500' }}>Phụ kiện</Link>
           </Stack>
 
-          {/* Cột 3: Hỗ trợ */}
           <Stack align={'flex-start'}>
             <ListHeader>Hỗ trợ</ListHeader>
             <Link href={'/profile'} _hover={{ color: 'blue.500' }}>Tài khoản</Link>
@@ -94,7 +91,6 @@ export default function Footer() {
             <Link href={'#'} _hover={{ color: 'blue.500' }}>Liên hệ</Link>
           </Stack>
 
-          {/* Cột 4: Theo dõi */}
           <Stack align={'flex-start'}>
             <ListHeader>Theo dõi chúng tôi</ListHeader>
             <Stack direction={'row'} spacing={4}>
@@ -115,7 +111,6 @@ export default function Footer() {
         </SimpleGrid>
       </Container>
 
-      {/* Dòng bản quyền dưới cùng */}
       <Box borderTopWidth={1} style={{ borderTopStyle: 'solid', borderColor: borderColor }}>
         <Container
           as={Stack}

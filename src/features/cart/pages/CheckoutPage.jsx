@@ -1,4 +1,3 @@
-// src/features/cart/pages/CheckoutPage.jsx
 import React, { useEffect, useState } from 'react';
 import {
     Box, Container, Grid, VStack, Heading, Text, Flex, Radio, RadioGroup,
@@ -31,16 +30,13 @@ const CheckoutPage = () => {
         province: '', district: '', ward: '', default: false
     });
 
-    // --- COLOR MODE HOOKS (ĐẶT Ở ĐÂY LÀ ĐÚNG) ---
     const pageBg = useColorModeValue("gray.50", "gray.900");
     const boxBg = useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.800", "white");
     const borderColor = useColorModeValue("gray.200", "gray.700");
     
-    // Fix lỗi Hook: Khai báo màu cho item trong list MỘT LẦN ở đây
     const addrItemBg = useColorModeValue("white", "gray.700");
     const addrSubTextColor = useColorModeValue("gray.600", "gray.400");
-    // ---------------------------------------------
 
     useEffect(() => {
         const fetchData = async () => {
@@ -171,7 +167,6 @@ const CheckoutPage = () => {
                             )}
                         </Box>
 
-                        {/* Phương thức thanh toán */}
                         <Box bg={boxBg} p={6} borderRadius="lg" shadow="sm" border="1px solid" borderColor={borderColor}>
                             <Heading size="md" mb={4} color={textColor}>Phương thức thanh toán</Heading>
                             <RadioGroup onChange={setPaymentMethod} value={paymentMethod} color={textColor}>
@@ -182,7 +177,6 @@ const CheckoutPage = () => {
                             </RadioGroup>
                         </Box>
 
-                        {/* Ghi chú */}
                         <Box bg={boxBg} p={6} borderRadius="lg" shadow="sm" border="1px solid" borderColor={borderColor}>
                             <Heading size="md" mb={4} color={textColor}>Ghi chú đơn hàng</Heading>
                             <Input 

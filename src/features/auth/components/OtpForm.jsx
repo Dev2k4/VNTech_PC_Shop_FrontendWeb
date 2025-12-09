@@ -6,11 +6,9 @@ import {
 const OtpForm = ({ onSubmit, onResend, email, isLoading }) => {
     const [otp, setOtp] = useState('');
 
-    // --- FIX DARK MODE ---
     const bg = useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.800", "white");
     const borderColor = useColorModeValue("gray.200", "gray.600");
-    // ---------------------
 
     const handleSubmit = (e) => {
         e.preventDefault();

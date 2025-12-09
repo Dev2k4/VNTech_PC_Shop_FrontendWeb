@@ -14,7 +14,6 @@ import { StarIcon } from "@chakra-ui/icons";
 import { formatDate } from "../../../utils/format";
 
 const ReviewList = ({ reviews }) => {
-  // Color mode values
   const cardBg = useColorModeValue("apple.lightCard", "apple.card");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
   const textColor = useColorModeValue("apple.lightText", "white");

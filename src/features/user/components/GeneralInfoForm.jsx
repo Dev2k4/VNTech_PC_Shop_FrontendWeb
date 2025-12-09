@@ -9,7 +9,6 @@ const GeneralInfoForm = ({ initialData, onSubmit, isLoading }) => {
         phoneNumber: ''
     });
 
-    // Khi dữ liệu từ cha tải xong, cập nhật vào form
     useEffect(() => {
         if (initialData) {
             setFormData({

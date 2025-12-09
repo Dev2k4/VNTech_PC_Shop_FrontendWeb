@@ -4,7 +4,6 @@ import { Box, Table, Tbody, Tr, Td, useColorModeValue } from "@chakra-ui/react";
 const SpecificationTable = ({ specifications }) => {
   if (!specifications || specifications.length === 0) return null;
 
-  // Color mode values
   const cardBg = useColorModeValue("apple.lightCard", "apple.card");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
   const textColor = useColorModeValue("apple.lightText", "white");

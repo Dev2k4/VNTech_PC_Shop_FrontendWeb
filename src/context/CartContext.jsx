@@ -8,12 +8,10 @@ export const CartProvider = ({ children }) => {
     const [cartCount, setCartCount] = useState(0);
     const toast = useToast();
 
-    // Hàm lấy số lượng item
     const fetchCartCount = async () => {
         const token = localStorage.getItem('accessToken');
         const userId = localStorage.getItem('userId');
 
-        // Nếu chưa đăng nhập thì reset về 0 và thoát luôn
         if (!token || !userId) {
             setCartCount(0);
             return;
@@ -21,7 +19,7 @@ export const CartProvider = ({ children }) => {
 
         try {
             const res = await CartService.getCount();
-            if (res && res.success) { // Kiểm tra kỹ response
+            if (res && res.success) {  
                 setCartCount(res.data);
             }
         } catch (error) {
@@ -29,12 +27,10 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    // Gọi lần đầu khi load trang
     useEffect(() => {
         fetchCartCount();
     }, []);
 
-    // Hàm thêm vào giỏ
     const addToCart = async (productId, quantity = 1) => {
         const token = localStorage.getItem('accessToken');
         const userId = localStorage.getItem('userId');
@@ -53,7 +49,6 @@ export const CartProvider = ({ children }) => {
         try {
             await CartService.addToCart({ productId, quantity });
             
-            // Cập nhật lại số lượng ngay lập tức
             await fetchCartCount(); 
             
             toast({ 

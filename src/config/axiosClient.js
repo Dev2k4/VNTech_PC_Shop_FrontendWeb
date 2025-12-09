@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-    // SỬA DÒNG NÀY: Xóa http://localhost:8080, chỉ để lại đường dẫn tương đối
     baseURL: '/api/v1', 
     headers: {
         'Content-Type': 'application/json',

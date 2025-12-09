@@ -32,7 +32,6 @@ const ProductDetailPage = () => {
   const { addToCart } = useCart();
   const toast = useToast();
 
-  // Color mode values
   const bgColor = useColorModeValue("apple.lightBg", "apple.bg");
   const cardBg = useColorModeValue("apple.lightCard", "apple.card");
   const textColor = useColorModeValue("apple.lightText", "white");

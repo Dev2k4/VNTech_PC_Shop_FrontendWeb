@@ -15,9 +15,7 @@ const ChangePasswordForm = ({ onSubmit }) => {
             toast({ title: 'Mật khẩu xác nhận không khớp', status: 'warning', duration: 3000 });
             return;
         }
-        // Gửi dữ liệu lên cha xử lý API
         onSubmit(passData, () => {
-            // Callback để reset form nếu thành công
             setPassData({ oldPassword: '', newPassword: '', confirmNewPassword: '' });
         });
     };

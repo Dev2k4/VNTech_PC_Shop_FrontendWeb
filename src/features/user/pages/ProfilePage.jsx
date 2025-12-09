@@ -16,7 +16,6 @@ const ProfilePage = () => {
 
     const cardBg = useColorModeValue('white', 'gray.800');
 
-    // --- LOGIC GỌI API ---
     const fetchProfile = async () => {
         try {
             const res = await UserService.getProfile();
@@ -63,7 +62,7 @@ const ProfilePage = () => {
                 toast({ title: 'Cập nhật thành công', status: 'success' });
                 localStorage.setItem("userName", formData.fullName || user.username);
                 window.dispatchEvent(new Event("storage"));
-                fetchProfile(); // Load lại data mới nhất từ server
+                fetchProfile();  
             }
         } catch (error) {
             toast({ title: 'Cập nhật thất bại', description: error.response?.data?.message, status: 'error' });
@@ -76,24 +75,21 @@ const ProfilePage = () => {
         try {
             await UserService.changePassword(passData);
             toast({ title: 'Đổi mật khẩu thành công', status: 'success' });
-            if (onSuccess) onSuccess(); // Gọi callback để reset form
+            if (onSuccess) onSuccess(); 
         } catch (error) {
             toast({ title: 'Đổi mật khẩu thất bại', description: error.response?.data?.message, status: 'error' });
         }
     };
 
-    // --- RENDER ---
     if (loading) return <Box textAlign="center" py={20}><Spinner size="xl" color="blue.500" /></Box>;
 
     return (
         <Container maxW="container.lg" py={10}>
             <Grid templateColumns={{ base: "1fr", md: "300px 1fr" }} gap={8}>
-                {/* Component bên trái */}
                 <VStack spacing={6} align="stretch">
                     <UserInfoCard user={user} onAvatarChange={handleAvatarChange} />
                 </VStack>
 
-                {/* Component bên phải (Tabs) */}
                 <Box bg={cardBg} p={6} borderRadius="lg" shadow="sm">
                     <Tabs variant="enclosed" colorScheme="blue">
                         <TabList mb={4}>

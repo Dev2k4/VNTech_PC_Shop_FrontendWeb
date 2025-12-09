@@ -9,16 +9,13 @@ import ProductDetailPage from '../features/product/pages/ProductDetailPage';
 import CartPage from '../features/cart/pages/CartPage';
 import CheckoutPage from '../features/cart/pages/CheckoutPage';
 
-// Import các trang Auth
 import LoginPage from '../features/auth/pages/LoginPage';
 import RegisterPage from '../features/auth/pages/RegisterPage';
 
-// Import các trang User & Order (Bổ sung phần bị thiếu)
 import ProfilePage from '../features/user/pages/ProfilePage';
 import OrderHistoryPage from '../features/order/pages/OrderHistoryPage';
 import OrderDetailPage from '../features/order/pages/OrderDetailPage';
 
-// Import các trang Admin (Đã xóa các dòng trùng lặp)
 import AdminLayout from '../layouts/AdminLayout';
 import AdminDashboard from '../features/admin/pages/AdminDashboard';
 import AdminCategoryPage from '../features/admin/pages/AdminCategoryPage';

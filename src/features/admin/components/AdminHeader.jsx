@@ -11,7 +11,6 @@ const AdminHeader = ({ onOpen }) => {
 
   const handleLogout = () => {
     localStorage.clear();
-    // Bắn event để các component khác cập nhật nếu cần
     window.dispatchEvent(new Event("auth-change"));
     navigate('/login');
   };
@@ -26,7 +25,6 @@ const AdminHeader = ({ onOpen }) => {
       borderBottomColor={borderColor}
       justifyContent={{ base: 'space-between', md: 'flex-end' }}
     >
-      {/* Mobile Menu Button */}
       <IconButton
         display={{ base: 'flex', md: 'none' }}
         onClick={onOpen}

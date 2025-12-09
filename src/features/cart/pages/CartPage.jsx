@@ -16,7 +16,6 @@ const CartPage = () => {
     const { fetchCartCount } = useCart();
     const toast = useToast();
 
-    // Color mode values
     const bgColor = useColorModeValue("apple.lightBg", "apple.bg");
     const cardBg = useColorModeValue("apple.lightCard", "apple.card");
     const textColor = useColorModeValue("apple.lightText", "white");
@@ -40,22 +39,19 @@ const CartPage = () => {
         fetchCart();
     }, []);
 
-    // --- HÀM XỬ LÝ TĂNG GIẢM SỐ LƯỢNG ---
     const handleUpdateQuantity = async (itemId, currentQuantity, change) => {
         const newQuantity = currentQuantity + change;
 
-        // Nếu giảm xuống < 1 thì không làm gì (hoặc có thể hỏi xóa)
         if (newQuantity < 1) return;
 
         try {
-            // Gọi API cập nhật
+         
             const res = await CartService.updateItem(itemId, newQuantity);
             
             if (res.success) {
-                // Cập nhật lại state giỏ hàng ngay lập tức để UI mượt mà
-                // (Cách này nhanh hơn gọi lại fetchCart)
+                 
                 fetchCart(); 
-                fetchCartCount(); // Cập nhật số nhỏ trên Header
+                fetchCartCount();  
             }
         } catch (error) {
             toast({

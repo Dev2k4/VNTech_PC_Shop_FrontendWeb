@@ -9,20 +9,17 @@ const ProductCard = ({ product }) => {
   const displayImage = images && images.length > 0 ? images[0].imageUrl : "https://via.placeholder.com/300";
   const isOutOfStock = stock <= 0;
 
-  // Lấy hàm addToCart từ Context
   const { addToCart } = useCart();
   const toast = useToast();
 
-  // Color mode values
   const cardBg = useColorModeValue("apple.lightCard", "apple.card");
   const cardHoverBg = useColorModeValue("apple.lightCardHover", "apple.cardHover");
   const textColor = useColorModeValue("apple.lightText", "white");
   const imageBg = useColorModeValue("gray.100", "#040404");
 
-  // Hàm xử lý khi bấm nút Mua ngay
   const handleBuyNow = async (e) => {
-    e.preventDefault(); // Ngăn chặn thẻ Link bao ngoài (nếu có) chuyển trang
-    e.stopPropagation(); // Ngăn chặn sự kiện nổi bọt
+    e.preventDefault(); 
+    e.stopPropagation(); 
 
     if (isOutOfStock) {
         toast({ title: "Sản phẩm đã hết hàng", status: "warning" });
