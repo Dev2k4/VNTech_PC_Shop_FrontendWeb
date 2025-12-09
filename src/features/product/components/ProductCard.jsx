@@ -1,32 +1,48 @@
 import React from "react";
-import { Box, Image, Text, Button, Flex, VStack, useColorModeValue, useToast } from "@chakra-ui/react";
+import {
+  Box,
+  Image,
+  Text,
+  Button,
+  Flex,
+  VStack,
+  useColorModeValue,
+  useToast,
+} from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import { formatCurrency } from "../../../utils/format";
-import { useCart } from "../../../context/CartContext"; // <--- QUAN TRỌNG: Thêm dòng này
+import { useCart } from "../../../context/CartContext"; 
 
 const ProductCard = ({ product }) => {
-  const { id, productName, salePrice, originalPrice, brand, stock, images } = product;
-  const displayImage = images && images.length > 0 ? images[0].imageUrl : "https://via.placeholder.com/300";
+  const { id, productName, salePrice, originalPrice, brand, stock, images } =
+    product;
+  const displayImage =
+    images && images.length > 0
+      ? images[0].imageUrl
+      : "https://via.placeholder.com/300";
   const isOutOfStock = stock <= 0;
 
   const { addToCart } = useCart();
   const toast = useToast();
 
   const cardBg = useColorModeValue("apple.lightCard", "apple.card");
-  const cardHoverBg = useColorModeValue("apple.lightCardHover", "apple.cardHover");
+  const cardHoverBg = useColorModeValue(
+    "apple.lightCardHover",
+    "apple.cardHover"
+  );
   const textColor = useColorModeValue("apple.lightText", "white");
   const imageBg = useColorModeValue("gray.100", "#040404");
 
   const handleBuyNow = async (e) => {
-    e.preventDefault(); 
-    e.stopPropagation(); 
+    e.preventDefault();
+    e.stopPropagation();
 
     if (isOutOfStock) {
-        toast({ title: "Sản phẩm đã hết hàng", status: "warning" });
-        return;
+      toast({ title: "Sản phẩm đã hết hàng", status: "warning" });
+      return;
     }
 
-    await addToCart(product.id, 1);
+    await addToCart(product, 1);
   };
 
   return (
@@ -110,8 +126,7 @@ const ProductCard = ({ product }) => {
           </Flex>
         </VStack>
       </Link>
-      
-      {/* Nút Mua ngay */}
+
       <Box p={5} pt={0} display="flex" justifyContent="center">
         <Button
           variant="solid"
@@ -122,9 +137,9 @@ const ProductCard = ({ product }) => {
           px={6}
           _hover={{ bg: "blue.400" }}
           isDisabled={isOutOfStock}
-          onClick={handleBuyNow} // Gọi hàm ở đây
+          onClick={handleBuyNow}  
         >
-          Mua ngay
+          {isOutOfStock ? "Hết hàng" : "Mua ngay"}
         </Button>
       </Box>
     </Box>
