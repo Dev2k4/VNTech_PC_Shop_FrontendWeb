@@ -7,6 +7,13 @@ export default defineConfig({
     host: "localhost",
     port: 3000,
     open: true,
+    // --- CẤU HÌNH PROXY ĐỂ VƯỢT QUA CORS ---
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080', // Chuyển hướng sang Backend
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
-  
 });

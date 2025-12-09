@@ -10,39 +10,66 @@ const LoginPage = () => {
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const { fetchCartCount } = useCart();
-
-  // --- FIX DARK MODE BACKGROUND ---
   const bg = useColorModeValue("gray.50", "gray.900");
-  // --------------------------------
+
+  // Hàm giải mã JWT token (decode base64)
+  const parseJwt = (token) => {
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+      return null;
+    }
+  };
 
   const handleLogin = async (formData) => {
     setIsLoading(true);
     try {
+      // 1. Gọi API Login
       const loginRes = await AuthService.login(formData);
       
       if (loginRes.success || loginRes.data) {
         const { accessToken, refreshToken, role } = loginRes.data;
 
+        // 2. Lưu token vào localStorage
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("role", role);
 
-        try {
-            const profileRes = await AuthService.getProfile();
-            const userInfo = profileRes.data || profileRes; 
-            if (userInfo) {
-                localStorage.setItem("userId", userInfo.id);
-                localStorage.setItem("userName", userInfo.username || userInfo.fullName || userInfo.email);
-            }
-        } catch (profileErr) {
-            console.error("Lỗi lấy thông tin user:", profileErr);
+        // --- BƯỚC QUAN TRỌNG: LẤY THÔNG TIN USER ---
+        
+        // Cách 1: Giải mã Token để lấy Email/User ngay lập tức (Dự phòng nhanh nhất)
+        const decoded = parseJwt(accessToken);
+        if (decoded && decoded.sub) {
+             localStorage.setItem("userName", decoded.sub); // 'sub' thường là email
+             // Lưu ID tạm để Header nhận diện được User
+             localStorage.setItem("userId", "user-id-placeholder"); 
         }
 
-        window.dispatchEvent(new Event("storage"));
+        // Cách 2: Gọi API Profile theo Swagger (GET /user/profile) để lấy tên thật
+        try {
+            const profileRes = await AuthService.getProfile();
+            // Swagger response: { success: true, data: { id, fullName, email... } }
+            const userInfo = profileRes.data || profileRes; 
+            
+            if (userInfo) {
+                localStorage.setItem("userId", userInfo.id);
+                // Ưu tiên hiển thị: Username -> FullName -> Email
+                const displayName = userInfo.username || userInfo.fullName || userInfo.email;
+                localStorage.setItem("userName", displayName);
+            }
+        } catch (profileErr) {
+            console.error("Lỗi lấy profile, sẽ sử dụng thông tin từ token:", profileErr);
+        }
+
+        // 3. Bắn sự kiện "auth-change" để Header cập nhật ngay lập tức
+        window.dispatchEvent(new Event("auth-change"));
+        
+        // 4. Cập nhật giỏ hàng
         await fetchCartCount();
 
         toast({ title: "Đăng nhập thành công", status: "success", duration: 2000, isClosable: true });
 
+        // 5. Chuyển hướng
         if (role === "ADMIN" || role === "ROLE_ADMIN") {
           navigate("/admin");
         } else {

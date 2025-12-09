@@ -1,22 +1,25 @@
 import React from 'react';
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { Box, useColorModeValue, Flex } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
 import Header from '../components/layout/Header';
+import Footer from '../components/layout/Footer'; // Import Footer vừa tạo
 
 const MainLayout = () => {
   const bgColor = useColorModeValue("apple.lightBg", "apple.bg");
-  const footerColor = useColorModeValue("gray.600", "gray.500");
 
   return (
-    <Box minH="100vh" bg={bgColor}>
+    <Flex direction="column" minH="100vh" bg={bgColor}>
+      {/* Header cố định */}
       <Header />
-      <Box as="main">
+      
+      {/* Nội dung chính sẽ giãn ra để đẩy Footer xuống đáy nếu nội dung ngắn */}
+      <Box as="main" flex="1">
         <Outlet />
       </Box>
-      <Box py={10} textAlign="center" color={footerColor} fontSize="sm" mt={20}>
-        <p>Footer Test</p>
-      </Box>
-    </Box>
+
+      {/* Footer mới */}
+      <Footer />
+    </Flex>
   );
 };
 

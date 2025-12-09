@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-    baseURL: 'http://localhost:8080/api/v1',
+    // SỬA DÒNG NÀY: Xóa http://localhost:8080, chỉ để lại đường dẫn tương đối
+    baseURL: '/api/v1', 
     headers: {
         'Content-Type': 'application/json',
     },
@@ -18,7 +19,7 @@ axiosClient.interceptors.request.use(async (config) => {
 axiosClient.interceptors.response.use((response) => {
     return response.data; 
 }, (error) => {
-    throw error;
+    return Promise.reject(error);
 });
 
 export default axiosClient;

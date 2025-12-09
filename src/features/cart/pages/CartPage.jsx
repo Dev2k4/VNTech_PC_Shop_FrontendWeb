@@ -1,7 +1,8 @@
+// src/features/cart/pages/CartPage.jsx
 import React, { useEffect, useState } from 'react';
 import { 
     Box, Container, Heading, Image, Text, IconButton, Button, 
-    Flex, Divider, useToast, useColorModeValue
+    Flex, Divider, useToast, useColorModeValue, Table, Thead, Tbody, Tr, Th, Td, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper
 } from '@chakra-ui/react';
 import { AddIcon, MinusIcon, DeleteIcon } from '@chakra-ui/icons';
 import CartService from '../../../services/cart.service';
@@ -21,14 +22,15 @@ const CartPage = () => {
     const textColor = useColorModeValue("apple.lightText", "white");
     const subTextColor = useColorModeValue("apple.lightSubText", "gray.400");
     const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
-    const quantityBorderColor = useColorModeValue("gray.300", "gray.600");
 
     const fetchCart = async () => {
         try {
             const res = await CartService.getCart();
-            if (res.success) setCart(res.data);
+            if (res.success) {
+                setCart(res.data);
+            }
         } catch (error) {
-            console.error(error);
+            console.error("Lỗi tải giỏ hàng", error);
         } finally {
             setLoading(false);
         }
@@ -38,25 +40,41 @@ const CartPage = () => {
         fetchCart();
     }, []);
 
-    const handleUpdateQuantity = async (itemId, newQuantity) => {
+    // --- HÀM XỬ LÝ TĂNG GIẢM SỐ LƯỢNG ---
+    const handleUpdateQuantity = async (itemId, currentQuantity, change) => {
+        const newQuantity = currentQuantity + change;
+
+        // Nếu giảm xuống < 1 thì không làm gì (hoặc có thể hỏi xóa)
         if (newQuantity < 1) return;
+
         try {
-            await CartService.updateItem(itemId, newQuantity);
-            fetchCart();
+            // Gọi API cập nhật
+            const res = await CartService.updateItem(itemId, newQuantity);
+            
+            if (res.success) {
+                // Cập nhật lại state giỏ hàng ngay lập tức để UI mượt mà
+                // (Cách này nhanh hơn gọi lại fetchCart)
+                fetchCart(); 
+                fetchCartCount(); // Cập nhật số nhỏ trên Header
+            }
         } catch (error) {
-            toast({ title: "Lỗi cập nhật", status: "error" });
+            toast({
+                title: "Lỗi cập nhật",
+                description: error.response?.data?.message || "Không thể cập nhật số lượng",
+                status: "error"
+            });
         }
     };
 
     const handleRemoveItem = async (itemId) => {
-        if (!confirm("Bạn muốn xóa sản phẩm này?")) return;
+        if (!window.confirm("Bạn muốn xóa sản phẩm này?")) return;
         try {
             await CartService.removeItem(itemId);
             fetchCart();
             fetchCartCount();
-            toast({ title: "Đã xóa sản phẩm", status: "info" });
+            toast({ title: "Đã xóa sản phẩm", status: "success" });
         } catch (error) {
-            toast({ title: "Lỗi xóa", status: "error" });
+            toast({ title: "Lỗi xóa sản phẩm", status: "error" });
         }
     };
 
@@ -64,81 +82,101 @@ const CartPage = () => {
 
     if (!cart || cart.cartItems.length === 0) {
         return (
-            <Box minH="60vh" bg={bgColor} pt={20} textAlign="center" color={textColor}>
-                <Heading size="lg" mb={4}>Giỏ hàng của bạn đang trống.</Heading>
+            <Box textAlign="center" py={20} bg={bgColor} minH="60vh">
+                <Heading size="lg" mb={4} color={textColor}>Giỏ hàng của bạn đang trống</Heading>
+                <Text mb={6} color={subTextColor}>Hãy thêm vài sản phẩm nhé!</Text>
                 <Button as={Link} to="/" colorScheme="blue" borderRadius="full">Mua sắm ngay</Button>
             </Box>
         );
     }
 
     return (
-        <Box bg={bgColor} minH="100vh" py={10} color={textColor}>
-            <Container maxW="container.lg">
-                <Heading mb={8} borderBottom="1px solid" borderColor={borderColor} pb={4}>
-                    Xem lại giỏ hàng của bạn.
-                </Heading>
-
-                <Flex direction={{ base: "column", lg: "row" }} gap={10}>
+        <Box bg={bgColor} minH="100vh" py={10}>
+            <Container maxW="container.xl">
+                <Heading mb={8} size="xl" color={textColor}>Giỏ hàng ({cart.totalItems} sản phẩm)</Heading>
+                
+                <Flex direction={{ base: "column", lg: "row" }} gap={8}>
                     {/* Danh sách sản phẩm */}
                     <Box flex="2">
                         {cart.cartItems.map((item) => (
-                            <Flex key={item.id} py={6} borderBottom="1px solid" borderColor={borderColor} align="center">
-                                <Image 
-                                    src={item.product.mainImage || "https://via.placeholder.com/100"} 
-                                    boxSize="100px" 
-                                    objectFit="contain" 
-                                    bg="white" 
-                                    borderRadius="lg"
-                                    mr={6}
-                                />
-                                <Box flex="1">
-                                    <Heading size="md" mb={1}>{item.product.productName}</Heading>
-                                    <Text color={subTextColor} fontSize="sm" mb={2}>Giao hàng miễn phí</Text>
-                                    <Flex align="center" gap={4}>
-                                        <Flex align="center" border="1px solid" borderColor={quantityBorderColor} borderRadius="full" px={2} py={1}>
-                                            <IconButton 
-                                                icon={<MinusIcon w={3} h={3} />} 
-                                                size="xs" 
-                                                variant="ghost" 
-                                                color={textColor}
-                                                onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                                            />
-                                            <Text mx={3} fontSize="sm">{item.quantity}</Text>
-                                            <IconButton 
-                                                icon={<AddIcon w={3} h={3} />} 
-                                                size="xs" 
-                                                variant="ghost" 
-                                                color={textColor}
-                                                onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                                            />
-                                        </Flex>
-                                        <Button 
+                            <Flex 
+                                key={item.id} 
+                                bg={cardBg} 
+                                p={4} 
+                                mb={4} 
+                                borderRadius="xl" 
+                                align="center" 
+                                justify="space-between"
+                                border="1px solid"
+                                borderColor={borderColor}
+                            >
+                                <Flex align="center" gap={4}>
+                                    <Image 
+                                        src={item.product.mainImage} 
+                                        alt={item.product.productName} 
+                                        boxSize="80px" 
+                                        objectFit="cover" 
+                                        borderRadius="md"
+                                        fallbackSrc="https://via.placeholder.com/80"
+                                    />
+                                    <Box>
+                                        <Text fontWeight="bold" color={textColor} noOfLines={1}>
+                                            {item.product.productName}
+                                        </Text>
+                                        <Text fontSize="sm" color={subTextColor}>
+                                            Đơn giá: {formatCurrency(item.price)}
+                                        </Text>
+                                    </Box>
+                                </Flex>
+
+                                <Flex align="center" gap={6}>
+                                    {/* Nút Tăng/Giảm */}
+                                    <Flex align="center" border="1px solid" borderColor={borderColor} borderRadius="lg">
+                                        <IconButton 
+                                            icon={<MinusIcon w={3} h={3} />} 
                                             size="sm" 
-                                            variant="link" 
-                                            color="red.400" 
-                                            leftIcon={<DeleteIcon />}
-                                            onClick={() => handleRemoveItem(item.id)}
-                                        >
-                                            Xóa
-                                        </Button>
+                                            variant="ghost"
+                                            onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
+                                            isDisabled={item.quantity <= 1}
+                                            aria-label="Giảm"
+                                            color={textColor}
+                                        />
+                                        <Text w="40px" textAlign="center" fontWeight="bold" color={textColor}>
+                                            {item.quantity}
+                                        </Text>
+                                        <IconButton 
+                                            icon={<AddIcon w={3} h={3} />} 
+                                            size="sm" 
+                                            variant="ghost"
+                                            onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
+                                            aria-label="Tăng"
+                                            color={textColor}
+                                        />
                                     </Flex>
-                                </Box>
-                                <Box textAlign="right">
-                                    <Text fontWeight="bold" fontSize="lg">
-                                        {formatCurrency(item.price * item.quantity)}
+
+                                    <Text fontWeight="bold" color="blue.500" w="100px" textAlign="right">
+                                        {formatCurrency(item.totalPrice)}
                                     </Text>
-                                </Box>
+
+                                    <IconButton 
+                                        icon={<DeleteIcon />} 
+                                        variant="ghost" 
+                                        colorScheme="red" 
+                                        onClick={() => handleRemoveItem(item.id)}
+                                        aria-label="Xóa"
+                                    />
+                                </Flex>
                             </Flex>
                         ))}
                     </Box>
 
-                    {/* Tổng tiền */}
+                    {/* Tổng tiền & Thanh toán */}
                     <Box flex="1">
-                        <Box bg={cardBg} p={6} borderRadius="2xl" position="sticky" top="100px">
-                            <Heading size="md" mb={6}>Tóm tắt đơn hàng</Heading>
+                        <Box bg={cardBg} p={6} borderRadius="2xl" position="sticky" top="100px" border="1px solid" borderColor={borderColor}>
+                            <Heading size="md" mb={6} color={textColor}>Tóm tắt đơn hàng</Heading>
                             <Flex justify="space-between" mb={3}>
                                 <Text color={subTextColor}>Tạm tính</Text>
-                                <Text>{formatCurrency(cart.totalPrice)}</Text>
+                                <Text color={textColor} fontWeight="bold">{formatCurrency(cart.totalPrice)}</Text>
                             </Flex>
                             <Flex justify="space-between" mb={6}>
                                 <Text color={subTextColor}>Vận chuyển</Text>
@@ -146,11 +184,19 @@ const CartPage = () => {
                             </Flex>
                             <Divider borderColor={borderColor} mb={4} />
                             <Flex justify="space-between" mb={8}>
-                                <Heading size="md">Tổng cộng</Heading>
-                                <Heading size="md" color="apple.blue">{formatCurrency(cart.totalPrice)}</Heading>
+                                <Heading size="md" color={textColor}>Tổng cộng</Heading>
+                                <Heading size="md" color="blue.500">{formatCurrency(cart.totalPrice)}</Heading>
                             </Flex>
-                            <Button w="full" colorScheme="blue" borderRadius="full" size="lg" as={Link} to="/checkout">
-                                Thanh toán
+                            <Button 
+                                w="full" 
+                                colorScheme="blue" 
+                                borderRadius="full" 
+                                size="lg" 
+                                as={Link} 
+                                to="/checkout"
+                                _hover={{ transform: 'scale(1.02)' }}
+                            >
+                                Thanh toán ngay
                             </Button>
                         </Box>
                     </Box>

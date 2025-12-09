@@ -1,3 +1,4 @@
+// src/features/cart/pages/CheckoutPage.jsx
 import React, { useEffect, useState } from 'react';
 import {
     Box, Container, Grid, VStack, Heading, Text, Flex, Radio, RadioGroup,
@@ -30,16 +31,16 @@ const CheckoutPage = () => {
         province: '', district: '', ward: '', default: false
     });
 
-    // --- CẤU HÌNH MÀU SẮC (FIX DARK MODE) ---
-    // Nền trang
+    // --- COLOR MODE HOOKS (ĐẶT Ở ĐÂY LÀ ĐÚNG) ---
     const pageBg = useColorModeValue("gray.50", "gray.900");
-    // Nền các khối (Box)
     const boxBg = useColorModeValue("white", "gray.800");
-    // Màu chữ chính
     const textColor = useColorModeValue("gray.800", "white");
-    // Màu viền
     const borderColor = useColorModeValue("gray.200", "gray.700");
-    // ----------------------------------------
+    
+    // Fix lỗi Hook: Khai báo màu cho item trong list MỘT LẦN ở đây
+    const addrItemBg = useColorModeValue("white", "gray.700");
+    const addrSubTextColor = useColorModeValue("gray.600", "gray.400");
+    // ---------------------------------------------
 
     useEffect(() => {
         const fetchData = async () => {
@@ -130,10 +131,9 @@ const CheckoutPage = () => {
             <Container maxW="container.xl">
                 <Heading mb={8} color={textColor}>Thanh toán</Heading>
                 <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap={10}>
-                    {/* CỘT TRÁI */}
                     <VStack align="stretch" spacing={8}>
                         
-                        {/* 1. Chọn địa chỉ */}
+                        {/* Chọn địa chỉ */}
                         <Box bg={boxBg} p={6} borderRadius="lg" shadow="sm" border="1px solid" borderColor={borderColor}>
                             <Flex justify="space-between" align="center" mb={4}>
                                 <Heading size="md" color={textColor}>Địa chỉ nhận hàng</Heading>
@@ -146,11 +146,20 @@ const CheckoutPage = () => {
                                 <RadioGroup onChange={(val) => setSelectedAddressId(parseInt(val))} value={selectedAddressId}>
                                     <Stack>
                                         {addresses.map((addr) => (
-                                            <Box key={addr.id} p={3} border="1px solid" borderColor={selectedAddressId === addr.id ? "blue.500" : borderColor} borderRadius="md" bg={useColorModeValue("white", "gray.700")}>
+                                            <Box 
+                                                key={addr.id} 
+                                                p={3} 
+                                                border="1px solid" 
+                                                // SỬ DỤNG BIẾN ĐÃ KHAI BÁO (addrItemBg), KHÔNG GỌI HOOK Ở ĐÂY
+                                                bg={addrItemBg} 
+                                                borderColor={selectedAddressId === addr.id ? "blue.500" : borderColor} 
+                                                borderRadius="md" 
+                                            >
                                                 <Radio value={addr.id}>
                                                     <Box ml={2}>
                                                         <Text fontWeight="bold" color={textColor}>{addr.recipientName} ({addr.phoneNumber})</Text>
-                                                        <Text fontSize="sm" color={useColorModeValue("gray.600", "gray.400")}>
+                                                        {/* SỬ DỤNG BIẾN addrSubTextColor */}
+                                                        <Text fontSize="sm" color={addrSubTextColor}>
                                                             {addr.addressDetail}, {addr.ward}, {addr.district}, {addr.province}
                                                         </Text>
                                                     </Box>
@@ -162,7 +171,7 @@ const CheckoutPage = () => {
                             )}
                         </Box>
 
-                        {/* 2. Phương thức thanh toán */}
+                        {/* Phương thức thanh toán */}
                         <Box bg={boxBg} p={6} borderRadius="lg" shadow="sm" border="1px solid" borderColor={borderColor}>
                             <Heading size="md" mb={4} color={textColor}>Phương thức thanh toán</Heading>
                             <RadioGroup onChange={setPaymentMethod} value={paymentMethod} color={textColor}>
@@ -173,7 +182,7 @@ const CheckoutPage = () => {
                             </RadioGroup>
                         </Box>
 
-                        {/* 3. Ghi chú */}
+                        {/* Ghi chú */}
                         <Box bg={boxBg} p={6} borderRadius="lg" shadow="sm" border="1px solid" borderColor={borderColor}>
                             <Heading size="md" mb={4} color={textColor}>Ghi chú đơn hàng</Heading>
                             <Input 
@@ -185,11 +194,9 @@ const CheckoutPage = () => {
                         </Box>
                     </VStack>
 
-                    {/* CỘT PHẢI */}
                     <Box>
                         <Box bg={boxBg} p={6} borderRadius="lg" shadow="sm" border="1px solid" borderColor={borderColor} position="sticky" top="100px">
                             <Heading size="md" mb={6} color={textColor}>Đơn hàng của bạn</Heading>
-                            
                             <VStack align="stretch" spacing={4} mb={6} maxH="300px" overflowY="auto">
                                 {cart.cartItems.map((item) => (
                                     <Flex key={item.id} justify="space-between">
@@ -201,9 +208,7 @@ const CheckoutPage = () => {
                                     </Flex>
                                 ))}
                             </VStack>
-                            
                             <Divider mb={4} borderColor={borderColor} />
-                            
                             <Flex justify="space-between" mb={2} color={textColor}>
                                 <Text>Tạm tính</Text>
                                 <Text>{formatCurrency(cart.totalPrice)}</Text>
@@ -212,29 +217,18 @@ const CheckoutPage = () => {
                                 <Text>Phí vận chuyển</Text>
                                 <Text color="green.500">Miễn phí</Text>
                             </Flex>
-                            
                             <Divider mb={4} borderColor={borderColor} />
-                            
                             <Flex justify="space-between" mb={6}>
                                 <Heading size="md" color={textColor}>Tổng cộng</Heading>
                                 <Heading size="md" color="blue.500">{formatCurrency(cart.totalPrice)}</Heading>
                             </Flex>
-
-                            <Button 
-                                w="full" 
-                                colorScheme="blue" 
-                                size="lg" 
-                                onClick={handlePlaceOrder}
-                                isLoading={loading}
-                                loadingText="Đang xử lý..."
-                            >
+                            <Button w="full" colorScheme="blue" size="lg" onClick={handlePlaceOrder} isLoading={loading}>
                                 ĐẶT HÀNG
                             </Button>
                         </Box>
                     </Box>
                 </Grid>
 
-                {/* MODAL */}
                 <Modal isOpen={isOpen} onClose={onClose}>
                     <ModalOverlay />
                     <ModalContent bg={boxBg} color={textColor}>
@@ -242,30 +236,12 @@ const CheckoutPage = () => {
                         <ModalCloseButton />
                         <ModalBody pb={6}>
                             <VStack spacing={4}>
-                                <FormControl>
-                                    <FormLabel>Tên người nhận</FormLabel>
-                                    <Input value={newAddress.recipientName} onChange={(e) => setNewAddress({...newAddress, recipientName: e.target.value})} />
-                                </FormControl>
-                                <FormControl>
-                                    <FormLabel>Số điện thoại</FormLabel>
-                                    <Input value={newAddress.phoneNumber} onChange={(e) => setNewAddress({...newAddress, phoneNumber: e.target.value})} />
-                                </FormControl>
-                                <FormControl>
-                                    <FormLabel>Tỉnh/Thành phố</FormLabel>
-                                    <Input value={newAddress.province} onChange={(e) => setNewAddress({...newAddress, province: e.target.value})} />
-                                </FormControl>
-                                <FormControl>
-                                    <FormLabel>Quận/Huyện</FormLabel>
-                                    <Input value={newAddress.district} onChange={(e) => setNewAddress({...newAddress, district: e.target.value})} />
-                                </FormControl>
-                                <FormControl>
-                                    <FormLabel>Phường/Xã</FormLabel>
-                                    <Input value={newAddress.ward} onChange={(e) => setNewAddress({...newAddress, ward: e.target.value})} />
-                                </FormControl>
-                                <FormControl>
-                                    <FormLabel>Địa chỉ chi tiết</FormLabel>
-                                    <Input value={newAddress.addressDetail} onChange={(e) => setNewAddress({...newAddress, addressDetail: e.target.value})} />
-                                </FormControl>
+                                <FormControl><FormLabel>Tên người nhận</FormLabel><Input value={newAddress.recipientName} onChange={(e) => setNewAddress({...newAddress, recipientName: e.target.value})} /></FormControl>
+                                <FormControl><FormLabel>Số điện thoại</FormLabel><Input value={newAddress.phoneNumber} onChange={(e) => setNewAddress({...newAddress, phoneNumber: e.target.value})} /></FormControl>
+                                <FormControl><FormLabel>Tỉnh/Thành phố</FormLabel><Input value={newAddress.province} onChange={(e) => setNewAddress({...newAddress, province: e.target.value})} /></FormControl>
+                                <FormControl><FormLabel>Quận/Huyện</FormLabel><Input value={newAddress.district} onChange={(e) => setNewAddress({...newAddress, district: e.target.value})} /></FormControl>
+                                <FormControl><FormLabel>Phường/Xã</FormLabel><Input value={newAddress.ward} onChange={(e) => setNewAddress({...newAddress, ward: e.target.value})} /></FormControl>
+                                <FormControl><FormLabel>Địa chỉ chi tiết</FormLabel><Input value={newAddress.addressDetail} onChange={(e) => setNewAddress({...newAddress, addressDetail: e.target.value})} /></FormControl>
                                 <Button colorScheme="blue" w="full" onClick={handleAddAddress}>Lưu địa chỉ</Button>
                             </VStack>
                         </ModalBody>

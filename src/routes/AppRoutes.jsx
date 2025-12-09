@@ -1,8 +1,9 @@
+// src/routes/AppRoutes.jsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 
-// Import các trang tính năng
+// Import các trang tính năng User
 import HomePage from '../features/product/pages/HomePage';
 import ProductDetailPage from '../features/product/pages/ProductDetailPage';
 import CartPage from '../features/cart/pages/CartPage';
@@ -12,42 +13,48 @@ import CheckoutPage from '../features/cart/pages/CheckoutPage';
 import LoginPage from '../features/auth/pages/LoginPage';
 import RegisterPage from '../features/auth/pages/RegisterPage';
 
-// Import các trang User & Order (Đảm bảo đường dẫn import đúng với thư mục bạn đã tạo)
+// Import các trang User & Order (Bổ sung phần bị thiếu)
 import ProfilePage from '../features/user/pages/ProfilePage';
 import OrderHistoryPage from '../features/order/pages/OrderHistoryPage';
 import OrderDetailPage from '../features/order/pages/OrderDetailPage';
 
+// Import các trang Admin (Đã xóa các dòng trùng lặp)
+import AdminLayout from '../layouts/AdminLayout';
+import AdminDashboard from '../features/admin/pages/AdminDashboard';
+import AdminCategoryPage from '../features/admin/pages/AdminCategoryPage';
+import AdminProductPage from '../features/admin/pages/AdminProductPage';
+import AdminOrderPage from '../features/admin/pages/AdminOrderPage';
+import AdminUserPage from '../features/admin/pages/AdminUserPage';
+
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Group 1: Các trang CÓ Header & Footer (Nằm trong MainLayout) */}
+      {/* --- USER ROUTES --- */}
       <Route path="/" element={<MainLayout />}>
-        {/* Trang chủ (index) */}
         <Route index element={<HomePage />} />
-        
-        {/* Sản phẩm */}
         <Route path="products/:id" element={<ProductDetailPage />} />
-        
-        {/* Giỏ hàng & Thanh toán */}
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         
-        {/* --- CÁC ROUTE BẠN ĐANG BỊ THIẾU HOẶC SAI --- */}
-        {/* Hồ sơ cá nhân */}
+        {/* Route User */}
         <Route path="profile" element={<ProfilePage />} />
-        
-        {/* Lịch sử đơn hàng */}
         <Route path="user/orders" element={<OrderHistoryPage />} />
         <Route path="user/orders/:id" element={<OrderDetailPage />} />
-        {/* ------------------------------------------- */}
       </Route>
 
-      {/* Group 2: Các trang KHÔNG CÓ Header (Đứng độc lập) */}
+      {/* --- AUTH ROUTES --- */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       
-      {/* Route dự phòng: Nếu nhập link linh tinh thì về trang chủ (hoặc trang 404 nếu bạn có) */}
-      {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+      {/* --- ADMIN ROUTES --- */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<AdminDashboard />} />
+        <Route path="categories" element={<AdminCategoryPage />} />
+        <Route path="products" element={<AdminProductPage />} />
+        <Route path="orders" element={<AdminOrderPage />} />
+        <Route path="users" element={<AdminUserPage />} />
+      </Route>
+
     </Routes>
   );
 };

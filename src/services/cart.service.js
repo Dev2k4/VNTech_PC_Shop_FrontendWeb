@@ -1,39 +1,43 @@
 import axiosClient from '../config/axiosClient';
 
-// Hàm này phải lấy userId MỚI NHẤT từ localStorage mỗi khi được gọi
-const getConfig = () => {
-    const userId = localStorage.getItem('userId'); 
-    return {
-        headers: {
-            "X-User-Id": userId 
-        }
-    };
-};
-
 const CartService = {
-    // Lấy giỏ hàng
     getCart: () => {
-        return axiosClient.get('/cart', getConfig());
+        return axiosClient.get('/cart');
     },
 
-    // Thêm sản phẩm
     addToCart: (data) => {
-        return axiosClient.post('/cart/items', data, getConfig());
+        // Ép kiểu dữ liệu sang số để tránh lỗi 400 từ Backend
+        const payload = {
+            productId: parseInt(data.productId),
+            quantity: parseInt(data.quantity)
+        };
+        return axiosClient.post('/cart/items', payload);
     },
 
-    // Cập nhật số lượng
     updateItem: (itemId, quantity) => {
-        return axiosClient.put(`/cart/items/${itemId}`, { quantity }, getConfig());
+        const payload = { quantity: parseInt(quantity) };
+        return axiosClient.put(`/cart/items/${itemId}`, payload);
     },
 
-    // Xóa sản phẩm
     removeItem: (itemId) => {
-        return axiosClient.delete(`/cart/items/${itemId}`, getConfig());
+        return axiosClient.delete(`/cart/items/${itemId}`);
     },
 
-    // Đếm số lượng
     getCount: () => {
-        return axiosClient.get('/cart/count', getConfig());
+        return axiosClient.get('/cart/count');
+    },
+    
+    // Thêm hàm updateSelectedItems nếu chưa có (dựa theo Swagger)
+    updateSelectedItems: (itemIds, selected) => {
+        // itemIds là mảng [1, 2], selected là boolean
+        // Swagger: PUT /cart/items/select?itemIds=1,2&selected=true
+        // Axios params serializer sẽ tự lo việc này
+        return axiosClient.put('/cart/items/select', null, {
+            params: {
+                itemIds: itemIds.join(','),
+                selected: selected
+            }
+        });
     }
 };
 
