@@ -1,3 +1,4 @@
+// src/features/admin/components/AdminHeader.jsx
 import React from 'react';
 import { Flex, IconButton, Text, HStack, Avatar, Menu, MenuButton, MenuList, MenuItem, useColorModeValue, Box } from '@chakra-ui/react';
 import { FaBars } from 'react-icons/fa';
@@ -6,8 +7,11 @@ import { useNavigate } from 'react-router-dom';
 const AdminHeader = ({ onOpen }) => {
   const navigate = useNavigate();
   const userName = localStorage.getItem('userName') || 'Admin';
-  const bg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
+  
+  // Màu nền tối đồng bộ Sidebar
+  const bg = useColorModeValue('white', '#0a0a0a'); 
+  const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const textColor = useColorModeValue('gray.800', 'white');
 
   const handleLogout = () => {
     localStorage.clear();
@@ -18,7 +22,7 @@ const AdminHeader = ({ onOpen }) => {
   return (
     <Flex
       px={{ base: 4, md: 6 }}
-      height="16"
+      height="20" // Cao hơn xíu cho thoáng
       alignItems="center"
       bg={bg}
       borderBottomWidth="1px"
@@ -31,13 +35,10 @@ const AdminHeader = ({ onOpen }) => {
         variant="outline"
         aria-label="open menu"
         icon={<FaBars />}
+        color={textColor}
       />
 
-      <Text
-        display={{ base: 'flex', md: 'none' }}
-        fontSize="xl"
-        fontWeight="bold"
-      >
+      <Text display={{ base: 'flex', md: 'none' }} fontSize="xl" fontWeight="bold" color={textColor}>
         VNTech Admin
       </Text>
 
@@ -46,15 +47,15 @@ const AdminHeader = ({ onOpen }) => {
           <Menu>
             <MenuButton py={2} transition="all 0.3s" _focus={{ boxShadow: 'none' }}>
               <HStack>
-                <Avatar size={'sm'} name={userName} bg="blue.500" color="white" />
-                <Box display={{ base: 'none', md: 'block' }} textAlign="left" ml="2">
-                  <Text fontSize="sm" fontWeight="bold">{userName}</Text>
-                  <Text fontSize="xs" color="gray.500">Administrator</Text>
+                <Box textAlign="right" mr={3} display={{ base: 'none', md: 'block' }}>
+                  <Text fontSize="sm" fontWeight="bold" color={textColor}>{userName}</Text>
+                  <Text fontSize="xs" color="gray.500">Super Admin</Text>
                 </Box>
+                <Avatar size={'sm'} name={userName} bgGradient="linear(to-r, blue.400, purple.500)" color="white" />
               </HStack>
             </MenuButton>
-            <MenuList>
-              <MenuItem onClick={handleLogout} color="red.500">Đăng xuất</MenuItem>
+            <MenuList bg={useColorModeValue('white', '#1a1a1a')} borderColor={borderColor}>
+              <MenuItem onClick={handleLogout} color="red.400" _hover={{bg: 'whiteAlpha.100'}}>Đăng xuất</MenuItem>
             </MenuList>
           </Menu>
         </Flex>

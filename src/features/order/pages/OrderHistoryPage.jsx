@@ -1,12 +1,16 @@
+// src/features/order/pages/OrderHistoryPage.jsx
 import React, { useEffect, useState } from 'react';
-import { Box, Container, Heading, Spinner, Flex, useColorModeValue } from '@chakra-ui/react';
+import { Box, Container, Heading, Spinner, Flex, useColorModeValue, Text, Button } from '@chakra-ui/react';
+import { Link } from 'react-router-dom';
 import OrderService from '../../../services/order.service';
 import OrderHistoryTable from '../components/OrderHistoryTable';
-import OrderEmpty from '../components/OrderEmpty';
 
 const OrderHistoryPage = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
+    
+    // Theme
+    const pageBg = useColorModeValue("gray.50", "vntech.darkBg");
     const textColor = useColorModeValue("gray.800", "white");
 
     useEffect(() => {
@@ -15,7 +19,7 @@ const OrderHistoryPage = () => {
                 const res = await OrderService.getMyOrders();
                 if (res.success) setOrders(res.data);
             } catch (error) {
-                console.error("Lỗi tải đơn hàng:", error);
+                console.error(error);
             } finally {
                 setLoading(false);
             }
@@ -23,13 +27,24 @@ const OrderHistoryPage = () => {
         fetchOrders();
     }, []);
 
-    if (loading) return <Flex justify="center" align="center" h="50vh"><Spinner size="xl" /></Flex>;
+    if (loading) return <Flex justify="center" align="center" h="100vh" bg={pageBg}><Spinner size="xl" color="blue.500" /></Flex>;
 
     return (
-        <Box minH="80vh" py={10}>
+        <Box bg={pageBg} minH="100vh" py={10}>
             <Container maxW="container.xl">
-                <Heading mb={6} size="lg" color={textColor}>Lịch sử đơn hàng</Heading>
-                {orders.length === 0 ? <OrderEmpty /> : <OrderHistoryTable orders={orders} />}
+                <Flex justify="space-between" align="center" mb={8}>
+                    <Heading size="lg" color={textColor}>Lịch sử đơn hàng</Heading>
+                    <Button as={Link} to="/" variant="outline" colorScheme="blue" size="sm">Tiếp tục mua sắm</Button>
+                </Flex>
+
+                {orders.length === 0 ? (
+                    <Box textAlign="center" py={20} bg={useColorModeValue("white", "vntech.cardBg")} borderRadius="2xl">
+                        <Text color="gray.500" mb={4}>Bạn chưa có đơn hàng nào.</Text>
+                        <Button as={Link} to="/" variant="brand">Mua ngay</Button>
+                    </Box>
+                ) : (
+                    <OrderHistoryTable orders={orders} />
+                )}
             </Container>
         </Box>
     );

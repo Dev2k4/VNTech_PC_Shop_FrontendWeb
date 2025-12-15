@@ -4,65 +4,52 @@ import {
 } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 
-const LoginForm = ({ onSubmit, isLoading }) => {
+const LoginForm = ({ onSubmit, isLoading, isTransparent }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
 
-    const bg = useColorModeValue("white", "gray.800");
+    // Nếu isTransparent = true (được gọi từ trang Login có background), thì bg = transparent
+    const bg = isTransparent ? "transparent" : useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.800", "white");
-    const borderColor = useColorModeValue("gray.200", "gray.600");
+    const inputBg = useColorModeValue("gray.50", "whiteAlpha.100");
+    const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSubmit(formData);
-    };
+    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleSubmit = (e) => { e.preventDefault(); onSubmit(formData); };
 
     return (
-        <Box 
-            bg={bg} 
-            p={8} 
-            rounded="lg" 
-            shadow="lg" 
-            w={{ base: "90%", md: "400px" }} 
-            borderWidth="1px"
-            borderColor={borderColor}
-        >
-            <VStack spacing={4} as="form" onSubmit={handleSubmit}>
-                <Text fontSize="2xl" fontWeight="bold" color="blue.500">Đăng Nhập</Text>
-                
+        <Box w="full" bg={bg}>
+            <VStack spacing={5} as="form" onSubmit={handleSubmit}>
                 <FormControl isRequired>
                     <FormLabel color={textColor}>Email</FormLabel>
                     <Input 
-                        name="email" 
-                        type="email" 
-                        value={formData.email} 
-                        onChange={handleChange} 
+                        name="email" type="email" value={formData.email} onChange={handleChange} 
                         placeholder="email@example.com" 
-                        color={textColor}
+                        bg={inputBg} border="1px solid" borderColor={borderColor} color={textColor}
+                        _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
                     />
                 </FormControl>
 
                 <FormControl isRequired>
                     <FormLabel color={textColor}>Mật khẩu</FormLabel>
                     <Input 
-                        name="password" 
-                        type="password" 
-                        value={formData.password} 
-                        onChange={handleChange} 
+                        name="password" type="password" value={formData.password} onChange={handleChange} 
                         placeholder="******" 
-                        color={textColor}
+                        bg={inputBg} border="1px solid" borderColor={borderColor} color={textColor}
+                        _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
                     />
                 </FormControl>
 
-                <Button type="submit" colorScheme="blue" w="full" isLoading={isLoading} loadingText="Đang đăng nhập">
+                <Button 
+                    type="submit" w="full" size="lg" 
+                    bgGradient="linear(to-r, blue.500, purple.600)" 
+                    _hover={{ bgGradient: "linear(to-r, blue.600, purple.700)" }}
+                    color="white" isLoading={isLoading} loadingText="Đang đăng nhập"
+                >
                     Đăng nhập
                 </Button>
 
-                <Text fontSize="sm" color={textColor}>
-                    Chưa có tài khoản? <ChakraLink as={Link} to="/register" color="blue.500">Đăng ký ngay</ChakraLink>
+                <Text fontSize="sm" color="gray.400">
+                    Chưa có tài khoản? <ChakraLink as={Link} to="/register" color="blue.400" fontWeight="bold">Đăng ký ngay</ChakraLink>
                 </Text>
             </VStack>
         </Box>

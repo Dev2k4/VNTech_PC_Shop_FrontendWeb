@@ -1,23 +1,43 @@
+// src/features/admin/pages/AdminDashboard.jsx
 import React, { useEffect, useState } from 'react';
-import { Box, SimpleGrid, Stat, StatLabel, StatNumber, StatHelpText, Heading, useColorModeValue } from '@chakra-ui/react';
+import { Box, SimpleGrid, Stat, StatLabel, StatNumber, StatHelpText, Heading, useColorModeValue, Flex, Icon, Text } from '@chakra-ui/react';
+import { FaMoneyBillWave, FaShoppingCart, FaClock, FaTimesCircle } from 'react-icons/fa';
 import AdminService from '../../../services/admin.service';
 import { formatCurrency } from '../../../utils/format';
 
-const StatCard = ({ label, number, helpText, color }) => {
-    const bg = useColorModeValue('white', 'gray.800');
+const StatCard = ({ label, number, helpText, icon, color }) => {
+    // Style Card tối màu
+    const bg = useColorModeValue('white', '#111'); 
+    const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+
     return (
-        <Box bg={bg} p={6} borderRadius="lg" shadow="sm" borderLeft="4px solid" borderColor={color}>
-            <Stat>
-                <StatLabel fontSize="lg" color="gray.500">{label}</StatLabel>
-                <StatNumber fontSize="2xl" fontWeight="bold" my={2}>{number}</StatNumber>
-                <StatHelpText mb={0}>{helpText}</StatHelpText>
-            </Stat>
-        </Box>
+        <Flex 
+            bg={bg} p={6} borderRadius="2xl" 
+            border="1px solid" borderColor={borderColor}
+            align="center" justify="space-between"
+            boxShadow="lg"
+            transition="transform 0.2s"
+            _hover={{ transform: "translateY(-5px)" }}
+        >
+            <Box>
+                <Stat>
+                    <StatLabel fontSize="sm" color="gray.500" fontWeight="bold">{label}</StatLabel>
+                    <StatNumber fontSize="3xl" fontWeight="800" my={1} bgGradient={`linear(to-r, ${color}, white)`} bgClip="text" color={color}>
+                        {number}
+                    </StatNumber>
+                    <StatHelpText mb={0} color="gray.400" fontSize="xs">{helpText}</StatHelpText>
+                </Stat>
+            </Box>
+            <Box p={4} bg={`${color}20`} borderRadius="xl">
+                <Icon as={icon} w={8} h={8} color={color} />
+            </Box>
+        </Flex>
     );
 };
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
+    const textColor = useColorModeValue("gray.800", "white");
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -31,35 +51,39 @@ const AdminDashboard = () => {
         fetchStats();
     }, []);
 
-    if (!stats) return <Box p={6}>Đang tải dữ liệu...</Box>;
+    if (!stats) return <Box p={6} color="white">Đang tải dữ liệu...</Box>;
 
     return (
         <Box>
-            <Heading mb={6} size="lg">Tổng quan kinh doanh</Heading>
+            <Heading mb={8} size="lg" color={textColor}>Tổng quan kinh doanh</Heading>
             <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={6}>
                 <StatCard 
-                    label="Doanh thu" 
+                    label="DOANH THU" 
                     number={formatCurrency(stats.totalRevenue)} 
-                    helpText="Tổng doanh thu toàn thời gian"
-                    color="green.500"
+                    helpText="Tổng doanh thu thực tế"
+                    icon={FaMoneyBillWave}
+                    color="#48BB78" // Green
                 />
                 <StatCard 
-                    label="Đơn hôm nay" 
+                    label="ĐƠN HÀNG MỚI" 
                     number={stats.todayOrders} 
-                    helpText="Số lượng đơn mới"
-                    color="blue.500"
+                    helpText="Đơn hàng trong hôm nay"
+                    icon={FaShoppingCart}
+                    color="#4299E1" // Blue
                 />
                 <StatCard 
-                    label="Chờ xử lý" 
+                    label="CHỜ XỬ LÝ" 
                     number={stats.pendingOrders} 
-                    helpText="Cần xác nhận gấp"
-                    color="orange.500"
+                    helpText="Cần xác nhận ngay"
+                    icon={FaClock}
+                    color="#ECC94B" // Yellow
                 />
                 <StatCard 
-                    label="Đã hủy" 
+                    label="ĐÃ HỦY" 
                     number={stats.cancelledOrders} 
-                    helpText="Số đơn bị hủy"
-                    color="red.500"
+                    helpText="Đơn bị hủy / Hoàn tiền"
+                    icon={FaTimesCircle}
+                    color="#F56565" // Red
                 />
             </SimpleGrid>
         </Box>

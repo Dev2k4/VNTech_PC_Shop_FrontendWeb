@@ -1,13 +1,14 @@
+// src/components/layout/Header.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box, Container, Flex, Link as ChakraLink, Icon, IconButton, Badge, Button,
   Menu, MenuButton, MenuList, MenuItem, Avatar, Text, useToast, HStack,
-  MenuDivider, useColorMode, useColorModeValue, Tooltip,
+  MenuDivider, useColorMode, useColorModeValue, Tooltip, Input, InputGroup, InputRightElement
 } from "@chakra-ui/react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  FaApple, FaSearch, FaShoppingBag, FaBars, FaUser, FaSignOutAlt,
-  FaHistory, FaMoon, FaSun, FaChevronDown, FaCog,
+  FaMicrochip, FaSearch, FaShoppingCart, FaBars, FaUser, FaSignOutAlt,
+  FaHistory, FaMoon, FaSun, FaCog, FaGamepad
 } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import ProductService from "../../services/product.service";
@@ -19,23 +20,20 @@ const Header = () => {
   const toast = useToast();
   const { colorMode, toggleColorMode } = useColorMode();
 
-  const [categories, setCategories] = useState([]);
   const [user, setUser] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // --- Theme Colors ---
-  const bgColor = useColorModeValue(
-    isScrolled ? "white" : "rgba(255, 255, 255, 0.95)",
-    isScrolled ? "gray.900" : "rgba(22, 22, 23, 0.95)"
+  // --- TECH THEME COLORS ---
+  const bgHeader = useColorModeValue(
+    isScrolled ? "white" : "rgba(255, 255, 255, 0.9)",
+    isScrolled ? "rgba(5, 5, 5, 0.95)" : "rgba(5, 5, 5, 0.8)"
   );
-  const borderColor = useColorModeValue("gray.200", "gray.700");
-  const textColor = useColorModeValue("gray.800", "gray.100");
-  const iconColor = useColorModeValue("gray.600", "gray.300");
-  const hoverColor = useColorModeValue("black", "white");
-  const dropdownBg = useColorModeValue("white", "gray.800");
-  const dropdownBorder = useColorModeValue("gray.200", "gray.600");
-  const dropdownItemHover = useColorModeValue("gray.50", "gray.700");
-  const badgeColor = useColorModeValue("red.500", "red.300");
+  const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
+  const textColor = useColorModeValue("gray.800", "white");
+  const iconColor = useColorModeValue("gray.600", "gray.400");
+  
+  // Màu Gradient cho Logo VNTech
+  const logoGradient = "linear(to-r, #00C6FF, #0072FF)"; 
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -43,46 +41,18 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await ProductService.getCategories(); // Đã check service: getCategories() đúng
-        if (res?.success) setCategories(res.data);
-      } catch (error) {
-        console.error("Lỗi lấy danh mục:", error);
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  // --- LOGIC AUTHENTICATION (ĐÃ SỬA) ---
+  // Logic Auth (Giữ nguyên)
   useEffect(() => {
     const checkUserLogin = () => {
       const token = localStorage.getItem("accessToken");
-      const userId = localStorage.getItem("userId");
       const role = localStorage.getItem("role");
-      const userName = localStorage.getItem("userName") || "Thành viên";
-
-      // Logic cũ yêu cầu phải có userId. 
-      // Logic mới: Nếu có Token là coi như đã login (để UI cập nhật ngay), userId có thể lấy sau hoặc dùng dummy.
-      if (token) {
-        setUser({ 
-            id: userId || "user-temp-id", // Fallback ID để pass qua điều kiện check
-            role, 
-            name: userName 
-        });
-      } else {
-        setUser(null);
-      }
+      const userName = localStorage.getItem("userName") || "Member";
+      if (token) setUser({ role, name: userName });
+      else setUser(null);
     };
-
     checkUserLogin();
-    
-    // Lắng nghe sự kiện tùy chỉnh "auth-change" (quan trọng nhất)
     window.addEventListener("auth-change", checkUserLogin);
-    // Lắng nghe sự kiện storage cho các tab khác
     window.addEventListener("storage", checkUserLogin);
-
     return () => {
       window.removeEventListener("auth-change", checkUserLogin);
       window.removeEventListener("storage", checkUserLogin);
@@ -93,29 +63,18 @@ const Header = () => {
     try {
       const refreshToken = localStorage.getItem("refreshToken");
       if (refreshToken) await AuthService.logout(refreshToken);
-    } catch (error) {
-      console.log("Lỗi logout server", error);
-    } finally {
-      localStorage.clear();
-      setUser(null);
-      // Bắn sự kiện để các component khác (nếu có) biết đã logout
-      window.dispatchEvent(new Event("auth-change"));
-      
-      toast({
-        title: "Đăng xuất thành công",
-        status: "info",
-        duration: 2000,
-        position: "top",
-      });
-      navigate("/login");
-    }
+    } catch (e) {} 
+    localStorage.clear();
+    setUser(null);
+    window.dispatchEvent(new Event("auth-change"));
+    navigate("/login");
   };
 
   return (
     <Box
       as="header"
-      bg={bgColor}
-      backdropFilter="blur(20px)"
+      bg={bgHeader}
+      backdropFilter="blur(16px)" // Hiệu ứng kính mờ mạnh hơn
       position="sticky"
       top="0"
       zIndex="1000"
@@ -123,121 +82,154 @@ const Header = () => {
       borderBottom="1px solid"
       borderColor={borderColor}
       transition="all 0.3s ease"
-      boxShadow={isScrolled ? "sm" : "none"}
+      boxShadow={isScrolled ? "0 4px 30px rgba(0, 0, 0, 0.1)" : "none"}
     >
       <Container maxW="container.xl" px={{ base: 4, md: 6 }}>
-        <Flex h="64px" align="center" justify="space-between">
+        <Flex h="70px" align="center" justify="space-between">
           
-          {/* ... (Phần Logo và Menu giữ nguyên như code cũ của bạn) ... */}
-          <Flex align="center" gap={{ base: 2, lg: 8 }}>
+          {/* 1. LOGO & MOBILE MENU */}
+          <Flex align="center" gap={4}>
             <IconButton
               display={{ base: "flex", lg: "none" }}
               icon={<FaBars />}
               variant="ghost"
               color={iconColor}
               aria-label="Menu"
-              size="sm"
             />
-            <ChakraLink as={Link} to="/" display="flex" alignItems="center" _hover={{ transform: "scale(1.05)" }}>
-              <Icon as={FaApple} color={textColor} w={6} h={6} />
-              <Text ml={2} fontSize="xl" fontWeight="bold" color={textColor} display={{ base: "none", sm: "block" }}>
-                Store
-              </Text>
+            
+            <ChakraLink as={Link} to="/" _hover={{ textDecoration: 'none' }} group>
+              <HStack spacing={2}>
+                <Icon as={FaMicrochip} w={8} h={8} color="blue.500" />
+                <Box lineHeight="1">
+                    <Text 
+                        fontSize="2xl" 
+                        fontWeight="900" 
+                        fontFamily="heading"
+                        bgGradient={logoGradient}
+                        bgClip="text"
+                        letterSpacing="tight"
+                    >
+                        VNTech
+                    </Text>
+                    <Text fontSize="xs" fontWeight="bold" color="gray.500" letterSpacing="widest" ml={1}>
+                        STORE
+                    </Text>
+                </Box>
+              </HStack>
             </ChakraLink>
-            <Flex display={{ base: "none", lg: "flex" }} gap={6} align="center" ml={4}>
-              <ChakraLink as={Link} to="/" fontSize="14px" fontWeight="500" color={textColor} _hover={{ color: hoverColor, textDecoration: "none" }} py={2}>
-                Cửa hàng
-              </ChakraLink>
-              {categories.length > 0 && (
-                <Menu>
-                  <MenuButton as={Button} variant="ghost" size="sm" fontSize="14px" fontWeight="500" color={textColor} rightIcon={<FaChevronDown size={10} />} _hover={{ color: hoverColor, bg: dropdownItemHover }} px={3} h="32px">
-                    Danh mục
-                  </MenuButton>
-                  <MenuList bg={dropdownBg} borderColor={dropdownBorder} minW="220px" boxShadow="xl" py={2}>
-                    {categories.map((cat) => (
-                      <MenuItem key={cat.id} as={Link} to={`/?categoryId=${cat.id}`} bg="transparent" _hover={{ bg: dropdownItemHover }} color={textColor} fontSize="14px" py={2}>
-                        {cat.categoryName}
-                      </MenuItem>
-                    ))}
-                  </MenuList>
-                </Menu>
-              )}
-            </Flex>
           </Flex>
 
-          {/* RIGHT: Actions */}
-          <Flex gap={2} align="center">
-            <Tooltip label={`Chế độ ${colorMode === "light" ? "tối" : "sáng"}`}>
-              <IconButton icon={colorMode === "light" ? <FaMoon /> : <FaSun />} onClick={toggleColorMode} variant="ghost" color={iconColor} size="sm" />
-            </Tooltip>
+          {/* 2. SEARCH BAR (Desktop Only) */}
+          <Box display={{ base: "none", md: "block" }} flex="1" maxW="500px" mx={8}>
+             <InputGroup size="md">
+                <Input 
+                    placeholder="Tìm linh kiện, laptop, gear..." 
+                    bg={useColorModeValue("gray.100", "whiteAlpha.100")}
+                    border="none"
+                    color={textColor}
+                    focusBorderColor="blue.500"
+                    borderRadius="full"
+                    _placeholder={{ color: "gray.500" }}
+                />
+                <InputRightElement>
+                    <IconButton 
+                        icon={<FaSearch />} 
+                        size="sm" 
+                        variant="ghost" 
+                        color="blue.500" 
+                        borderRadius="full" 
+                        aria-label="Search"
+                    />
+                </InputRightElement>
+             </InputGroup>
+          </Box>
 
-            <Tooltip label="Giỏ hàng">
-              <Box position="relative">
-                <IconButton as={Link} to="/cart" icon={<FaShoppingBag />} variant="ghost" color={iconColor} size="sm" />
-                {cartCount > 0 && (
-                  <Badge position="absolute" top="0" right="0" bg={badgeColor} color="white" fontSize="10px" borderRadius="full" minW="4" h="4" display="flex" alignItems="center" justifyContent="center" transform="translate(25%, -25%)">
-                    {cartCount > 99 ? "99+" : cartCount}
-                  </Badge>
-                )}
-              </Box>
-            </Tooltip>
+          {/* 3. RIGHT ACTIONS */}
+          <HStack spacing={3}>
+            {/* Dark Mode Toggle */}
+            <IconButton 
+                icon={colorMode === "light" ? <FaMoon /> : <FaSun />} 
+                onClick={toggleColorMode} 
+                variant="ghost" 
+                color={iconColor} 
+                isRound
+            />
 
-            {/* --- USER MENU (Logic hiển thị dựa trên state user) --- */}
+            {/* Cart Button */}
+            <Box position="relative">
+              <IconButton 
+                as={Link} to="/cart" 
+                icon={<FaShoppingCart />} 
+                variant="ghost" 
+                color={iconColor} 
+                isRound
+                aria-label="Cart"
+              />
+              {cartCount > 0 && (
+                <Badge 
+                    position="absolute" top="-2px" right="-2px" 
+                    bgGradient="linear(to-r, pink.500, red.500)" 
+                    color="white" 
+                    fontSize="xs" 
+                    borderRadius="full" 
+                    w="18px" h="18px" 
+                    display="flex" alignItems="center" justifyContent="center"
+                    boxShadow="0 0 10px rgba(236, 72, 153, 0.6)"
+                >
+                  {cartCount}
+                </Badge>
+              )}
+            </Box>
+
+            {/* User Menu */}
             {user ? (
               <Menu>
-                <MenuButton as={Button} variant="ghost" rounded="full" p={1} minW="auto" _hover={{ bg: dropdownItemHover }}>
+                <MenuButton as={Button} variant="ghost" rounded="full" p={1} minW="auto">
                   <HStack spacing={2}>
-                    <Avatar size="sm" name={user.name} bg="blue.500" color="white" fontSize="xs" />
-                    <Text fontSize="sm" color={textColor} display={{ base: "none", md: "block" }}>{user.name}</Text>
+                    <Avatar 
+                        size="sm" 
+                        name={user.name} 
+                        src={`https://ui-avatars.com/api/?name=${user.name}&background=0D8ABC&color=fff`}
+                        border="2px solid" borderColor="blue.500"
+                    />
+                    <Text fontSize="sm" fontWeight="bold" display={{ base: "none", lg: "block" }}>
+                        {user.name}
+                    </Text>
                   </HStack>
                 </MenuButton>
-                <MenuList bg={dropdownBg} borderColor={dropdownBorder} boxShadow="2xl" minW="200px">
-                  <Box px={4} py={3}>
-                    <Text fontSize="sm" fontWeight="bold" color={textColor}>Xin chào!</Text>
-                    <Text fontSize="xs" color={iconColor} mt={1}>{user.name}</Text>
+                <MenuList 
+                    bg={useColorModeValue("white", "#1a1a1a")} 
+                    borderColor={borderColor}
+                    boxShadow="xl"
+                >
+                  <Box px={4} py={2}>
+                    <Text fontSize="xs" color="gray.500">Đang đăng nhập với vai trò</Text>
+                    <Badge colorScheme="blue" mt={1}>{user.role}</Badge>
                   </Box>
-
-                  <MenuDivider borderColor={dropdownBorder} />
-
-                  {/* --- LOGIC HIỂN THỊ MENU ADMIN --- */}
-                  {(user.role === "ADMIN" || user.role === "ROLE_ADMIN") && (
-                    <MenuItem
-                      icon={<FaCog />}
-                      _hover={{ bg: dropdownItemHover }}
-                      color={textColor}
-                      as={Link}
-                      to="/admin" // Chuyển đến trang Dashboard Admin
-                      fontSize="14px"
-                      py={3}
-                      fontWeight="bold"
-                    >
-                      Trang quản trị
-                    </MenuItem>
-                  )}
-                  {/* ---------------------------------- */}
-
-                  <MenuItem icon={<FaUser />} as={Link} to="/profile" fontSize="14px" py={3} _hover={{ bg: dropdownItemHover }}>
-                    Hồ sơ cá nhân
-                  </MenuItem>
+                  <MenuDivider />
                   
-                  <MenuItem icon={<FaHistory />} as={Link} to="/user/orders" fontSize="14px" py={3} _hover={{ bg: dropdownItemHover }}>
-                    Lịch sử đơn hàng
-                  </MenuItem>
-
-                  <MenuDivider borderColor={dropdownBorder} />
-
-                  <MenuItem icon={<FaSignOutAlt />} color="red.500" onClick={handleLogout} fontSize="14px" py={3} _hover={{ bg: "red.50" }}>
-                    Đăng xuất
-                  </MenuItem>
+                  {(user.role === "ADMIN" || user.role === "ROLE_ADMIN") && (
+                    <MenuItem icon={<FaCog />} as={Link} to="/admin">Trang quản trị</MenuItem>
+                  )}
+                  <MenuItem icon={<FaUser />} as={Link} to="/profile">Hồ sơ cá nhân</MenuItem>
+                  <MenuItem icon={<FaHistory />} as={Link} to="/user/orders">Đơn mua</MenuItem>
+                  <MenuDivider />
+                  <MenuItem icon={<FaSignOutAlt />} color="red.400" onClick={handleLogout}>Đăng xuất</MenuItem>
                 </MenuList>
               </Menu>
             ) : (
-              <HStack spacing={3}>
-                <Button as={Link} to="/login" size="sm" variant="ghost" color={textColor}>Đăng nhập</Button>
-                <Button as={Link} to="/register" size="sm" bg="blue.500" color="white">Đăng ký</Button>
-              </HStack>
+                <Button 
+                    as={Link} to="/login" 
+                    size="sm" 
+                    variant="brand" // Dùng variant gradient đã define ở theme
+                    leftIcon={<FaUser />}
+                    borderRadius="full"
+                    px={6}
+                >
+                    Đăng nhập
+                </Button>
             )}
-          </Flex>
+          </HStack>
         </Flex>
       </Container>
     </Box>

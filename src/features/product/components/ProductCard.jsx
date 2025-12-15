@@ -1,147 +1,152 @@
+// src/features/product/components/ProductCard.jsx
 import React from "react";
 import {
-  Box,
-  Image,
-  Text,
-  Button,
-  Flex,
-  VStack,
-  useColorModeValue,
-  useToast,
+  Box, Image, Text, Button, Flex, VStack, useColorModeValue, useToast, Badge, IconButton, Tooltip
 } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
+import { FaShoppingCart, FaEye } from "react-icons/fa";
 import { formatCurrency } from "../../../utils/format";
-import { useCart } from "../../../context/CartContext"; 
+import { useCart } from "../../../context/CartContext";
 
 const ProductCard = ({ product }) => {
-  const { id, productName, salePrice, originalPrice, brand, stock, images } =
-    product;
-  const displayImage =
-    images && images.length > 0
-      ? images[0].imageUrl
-      : "https://via.placeholder.com/300";
+  const { id, productName, salePrice, originalPrice, brand, stock, images } = product;
+  const displayImage = images?.[0]?.imageUrl || "https://via.placeholder.com/300";
   const isOutOfStock = stock <= 0;
-
   const { addToCart } = useCart();
   const toast = useToast();
 
-  const cardBg = useColorModeValue("apple.lightCard", "apple.card");
-  const cardHoverBg = useColorModeValue(
-    "apple.lightCardHover",
-    "apple.cardHover"
-  );
-  const textColor = useColorModeValue("apple.lightText", "white");
-  const imageBg = useColorModeValue("gray.100", "#040404");
+  // --- Styles ---
+  const cardBg = useColorModeValue("white", "gray.800");
+  const borderColor = useColorModeValue("gray.100", "whiteAlpha.100");
+  const textColor = useColorModeValue("gray.800", "white");
+  const subTextColor = useColorModeValue("gray.500", "gray.400");
 
   const handleBuyNow = async (e) => {
     e.preventDefault();
-    e.stopPropagation();
-
-    if (isOutOfStock) {
-      toast({ title: "Sản phẩm đã hết hàng", status: "warning" });
-      return;
-    }
-
+    if (isOutOfStock) return;
     await addToCart(product, 1);
   };
 
+  // Tính % giảm giá
+  const discountPercent = originalPrice > salePrice 
+    ? Math.round(((originalPrice - salePrice) / originalPrice) * 100) 
+    : 0;
+
   return (
     <Box
+      w="full"
       bg={cardBg}
+      border="1px solid"
+      borderColor={borderColor}
       borderRadius="2xl"
       overflow="hidden"
-      transition="all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1)"
-      _hover={{
-        transform: "scale(1.1)",
-        bg: cardHoverBg,
-        boxShadow: useColorModeValue(
-          "0 15px 20px rgba(0, 0, 0, 0.1)",
-          "0 15px 20px rgba(178, 178, 178, 0.53)"
-        ),
-      }}
       position="relative"
-      h="420px"
-      display="flex"
-      flexDirection="column"
+      transition="all 0.3s ease"
       role="group"
+      _hover={{
+        transform: "translateY(-5px)",
+        boxShadow: "xl",
+        borderColor: "blue.400"
+      }}
     >
-      <Link
-        to={`/products/${id}`}
-        style={{ flex: 1, display: "flex", flexDirection: "column" }}
-      >
-        <Flex
-          flex="1"
-          align="center"
-          justify="center"
-          p={5}
-          bg={imageBg}
-          position="relative"
+      {/* Badges */}
+      <Flex position="absolute" top={3} left={3} zIndex={2} gap={2}>
+        {discountPercent > 0 && (
+            <Badge colorScheme="red" variant="solid" borderRadius="md" px={2}>-{discountPercent}%</Badge>
+        )}
+        {stock > 0 && stock < 5 && (
+            <Badge colorScheme="orange" variant="solid" borderRadius="md" px={2}>Sắp hết</Badge>
+        )}
+      </Flex>
+
+      {/* Image Area */}
+      <Link to={`/products/${id}`}>
+        <Box 
+            h="200px" 
+            p={4} 
+            bg={useColorModeValue("gray.50", "whiteAlpha.50")} 
+            display="flex" 
+            alignItems="center" 
+            justifyContent="center"
+            position="relative"
+            overflow="hidden"
         >
-          <Image
-            src={displayImage}
-            alt={productName}
-            borderRadius="2xl"
-            height="140px"
-            width="140px"
-            objectFit="contain"
-            transition="transform 0.6s ease"
-            _groupHover={{ transform: "scale(1.15)" }}
-          />
-        </Flex>
-
-        <VStack p={5} align="center" spacing={1} bg={cardBg} zIndex="1">
-          <Text
-            fontSize="xsm"
-            fontWeight="bold"
-            color="#d46b08"
-            textTransform="uppercase"
-            letterSpacing="1px"
-          >
-            {isOutOfStock ? "Tạm hết" : brand || "New"}
-          </Text>
-          <Text
-            fontSize="md"
-            fontWeight="600"
-            color={textColor}
-            textAlign="center"
-            noOfLines={2}
-            h="48px"
-          >
-            {productName}
-          </Text>
-
-          <Flex align="baseline" gap={2} mt={1}>
-            <Text fontSize="lg" fontWeight="bold" color={textColor}>
-              {formatCurrency(salePrice)}
-            </Text>
-            {originalPrice > salePrice && (
-              <Text
-                textDecoration="line-through"
-                color="gray.500"
-                fontSize="xs"
-              >
-                {formatCurrency(originalPrice)}
-              </Text>
-            )}
-          </Flex>
-        </VStack>
+            <Image
+                src={displayImage}
+                alt={productName}
+                maxH="100%"
+                objectFit="contain"
+                transition="transform 0.5s ease"
+                _groupHover={{ transform: "scale(1.1)" }}
+            />
+            
+            {/* Quick Actions overlay on hover */}
+            <Flex 
+                position="absolute" 
+                bottom={0} 
+                left={0} 
+                right={0} 
+                bg="rgba(0,0,0,0.6)" 
+                p={2} 
+                justify="center" 
+                gap={2}
+                opacity={0}
+                transform="translateY(100%)"
+                transition="all 0.3s"
+                _groupHover={{ opacity: 1, transform: "translateY(0)" }}
+            >
+                <Tooltip label="Xem chi tiết">
+                    <IconButton icon={<FaEye />} size="sm" isRound colorScheme="blue" aria-label="View" />
+                </Tooltip>
+            </Flex>
+        </Box>
       </Link>
 
-      <Box p={5} pt={0} display="flex" justifyContent="center">
-        <Button
-          variant="solid"
-          size="sm"
-          bg="apple.blue"
-          color="white"
-          borderRadius="full"
-          px={6}
-          _hover={{ bg: "blue.400" }}
-          isDisabled={isOutOfStock}
-          onClick={handleBuyNow}  
-        >
-          {isOutOfStock ? "Hết hàng" : "Mua ngay"}
-        </Button>
-      </Box>
+      {/* Content Area */}
+      <VStack p={4} align="stretch" spacing={2}>
+        <Text fontSize="xs" fontWeight="bold" color="blue.500" textTransform="uppercase" letterSpacing="1px">
+            {brand || "VNTECH"}
+        </Text>
+        
+        <Link to={`/products/${id}`}>
+            <Text 
+                fontWeight="semibold" 
+                fontSize="md" 
+                color={textColor} 
+                noOfLines={2} 
+                h="44px" 
+                _hover={{ color: "blue.500" }}
+                title={productName}
+            >
+                {productName}
+            </Text>
+        </Link>
+
+        <Flex align="center" justify="space-between" mt={2}>
+            <Box>
+                <Text fontWeight="bold" fontSize="lg" color="blue.500">
+                    {formatCurrency(salePrice)}
+                </Text>
+                {originalPrice > salePrice && (
+                    <Text fontSize="xs" color="gray.500" textDecoration="line-through">
+                        {formatCurrency(originalPrice)}
+                    </Text>
+                )}
+            </Box>
+            
+            <IconButton 
+                icon={<FaShoppingCart />}
+                colorScheme="blue"
+                variant={isOutOfStock ? "ghost" : "solid"}
+                isDisabled={isOutOfStock}
+                onClick={handleBuyNow}
+                aria-label="Add to cart"
+                size="sm"
+                isRound
+                _hover={{ transform: "scale(1.1)" }}
+            />
+        </Flex>
+      </VStack>
     </Box>
   );
 };

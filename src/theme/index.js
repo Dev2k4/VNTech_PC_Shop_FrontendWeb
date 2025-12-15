@@ -1,4 +1,6 @@
-import { extendTheme, theme as baseTheme } from '@chakra-ui/react';
+// src/theme/index.js
+import { extendTheme } from '@chakra-ui/react';
+import { mode } from '@chakra-ui/theme-tools';
 
 const theme = extendTheme({
   config: {
@@ -6,143 +8,70 @@ const theme = extendTheme({
     useSystemColorMode: false,
   },
   colors: {
-    apple: {
-      // Dark mode colors
-      bg: "#000000",
-      card: "#1c1c1e",
-      cardHover: "#2c2c2e",
-      text: "#f5f5f7",
-      subText: "#86868b",
-      blue: "#2997ff",
-
-      // Light mode colors
-      lightBg: "#ffffff",
-      lightCard: "#f5f5f7",
-      lightCardHover: "#e8e8ed",
-      lightText: "#1d1d1f",
-      lightSubText: "#6e6e73",
+    vntech: {
+      50: '#E6FFFA',
+      100: '#B2F5EA',
+      500: '#319795', // Teal mặc định
+      // Gradient chủ đạo: Xanh Neon -> Tím
+      gradient: "linear-gradient(135deg, #00C6FF 0%, #0072FF 100%)",
+      gradientHover: "linear-gradient(135deg, #0072FF 0%, #00C6FF 100%)",
+      darkBg: "#050505", // Đen sâu hơn
+      cardBg: "#111111",
     }
   },
   styles: {
     global: (props) => ({
       body: {
-        bg: props.colorMode === 'dark' ? 'apple.bg' : 'apple.lightBg',
-        color: props.colorMode === 'dark' ? 'apple.text' : 'apple.lightText',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+        bg: mode('gray.50', 'vntech.darkBg')(props),
+        color: mode('gray.800', 'whiteAlpha.900')(props),
+        // Font hiện đại hơn cho công nghệ
+        fontFamily: "'Inter', -apple-system, system-ui, sans-serif",
       },
-      // Tự động style cho tất cả Box, Container
-      '*': {
-        borderColor: props.colorMode === 'dark' ? 'whiteAlpha.200' : 'gray.200',
+      // Tùy chỉnh thanh cuộn cho đẹp
+      "::-webkit-scrollbar": {
+        width: "8px",
+      },
+      "::-webkit-scrollbar-track": {
+        background: mode("gray.100", "#111")(props),
+      },
+      "::-webkit-scrollbar-thumb": {
+        background: mode("gray.400", "#444")(props),
+        borderRadius: "4px",
+      },
+      "::-webkit-scrollbar-thumb:hover": {
+        background: mode("blue.500", "blue.400")(props),
       },
     }),
   },
   components: {
-    // Button component
     Button: {
       baseStyle: {
-        borderRadius: "full",
-        fontWeight: "medium",
+        fontWeight: "bold",
+        borderRadius: "xl", // Bo góc mềm mại hơn
       },
       variants: {
-        solid: (props) => ({
-          bg: props.colorMode === 'dark' ? 'apple.blue' : 'apple.blue',
+        // Nút Brand (Gradient)
+        brand: (props) => ({
+          bgGradient: "linear(to-r, blue.400, purple.500)",
           color: "white",
           _hover: {
-            bg: "blue.500",
+            bgGradient: "linear(to-r, blue.500, purple.600)",
+            transform: "translateY(-2px)",
+            boxShadow: "lg",
           },
-        }),
-        ghost: (props) => ({
-          color: props.colorMode === 'dark' ? 'apple.text' : 'apple.lightText',
-          _hover: {
-            bg: props.colorMode === 'dark' ? 'whiteAlpha.200' : 'gray.100',
+          _active: {
+            transform: "translateY(0)",
           },
-        }),
-      },
-    },
-
-    // Input component
-    Input: {
-      variants: {
-        filled: (props) => ({
-          field: {
-            bg: props.colorMode === 'dark' ? 'whiteAlpha.100' : 'gray.100',
-            color: props.colorMode === 'dark' ? 'white' : 'gray.800',
-            _hover: {
-              bg: props.colorMode === 'dark' ? 'whiteAlpha.200' : 'gray.200',
-            },
-            _focus: {
-              bg: props.colorMode === 'dark' ? 'whiteAlpha.200' : 'gray.200',
-              borderColor: 'apple.blue',
-            },
-          },
-        }),
-        outline: (props) => ({
-          field: {
-            borderColor: props.colorMode === 'dark' ? 'whiteAlpha.300' : 'gray.300',
-            color: props.colorMode === 'dark' ? 'white' : 'gray.800',
-            _hover: {
-              borderColor: props.colorMode === 'dark' ? 'whiteAlpha.400' : 'gray.400',
-            },
-            _focus: {
-              borderColor: 'apple.blue',
-              boxShadow: `0 0 0 1px ${baseTheme.colors.blue[500]}`,
-            },
-          },
+          transition: "all 0.3s ease",
         }),
       },
     },
-
-    // Heading component
-    Heading: {
-      baseStyle: (props) => ({
-        color: props.colorMode === 'dark' ? 'apple.text' : 'apple.lightText',
-      }),
-    },
-
-    // Text component
-    Text: {
-      baseStyle: (props) => ({
-        color: props.colorMode === 'dark' ? 'apple.text' : 'apple.lightText',
-      }),
-    },
-
-    // Card/Box-like components
-    Box: {
-      baseStyle: (props) => ({
-        color: props.colorMode === 'dark' ? 'apple.text' : 'apple.lightText',
-      }),
-    },
-
-    // Form components
-    FormLabel: {
-      baseStyle: (props) => ({
-        color: props.colorMode === 'dark' ? 'apple.text' : 'apple.lightText',
-      }),
-    },
-
-    // Menu components
-    Menu: {
-      baseStyle: (props) => ({
-        list: {
-          bg: props.colorMode === 'dark' ? 'apple.card' : 'white',
-          borderColor: props.colorMode === 'dark' ? 'whiteAlpha.200' : 'gray.200',
-        },
-        item: {
-          bg: 'transparent',
-          color: props.colorMode === 'dark' ? 'white' : 'gray.800',
-          _hover: {
-            bg: props.colorMode === 'dark' ? 'whiteAlpha.100' : 'gray.100',
-          },
-        },
-      }),
-    },
-
-    // Divider
-    Divider: {
-      baseStyle: (props) => ({
-        borderColor: props.colorMode === 'dark' ? 'whiteAlpha.300' : 'gray.200',
-      }),
-    },
+    // Card component (Container)
+    Container: {
+      baseStyle: {
+        maxW: "container.xl",
+      }
+    }
   },
 });
 

@@ -1,49 +1,32 @@
 import React from 'react';
-import {
-    Box, Heading, Table, Thead, Tbody, Tr, Th, Td, Flex, Image, Text, useColorModeValue
-} from '@chakra-ui/react';
+import { Box, Heading, Flex, Image, Text, useColorModeValue, Divider } from '@chakra-ui/react';
 import { formatCurrency } from '../../../utils/format';
 
 const OrderItemList = ({ items }) => {
-    const bg = useColorModeValue("white", "gray.800");
-    const borderColor = useColorModeValue("gray.200", "gray.700");
     const textColor = useColorModeValue("gray.800", "white");
+    const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
 
     return (
-        <Box bg={bg} p={6} borderRadius="lg" shadow="sm" border="1px" borderColor={borderColor}>
-            <Heading size="md" mb={4} color={textColor}>Sản phẩm</Heading>
-            <Table variant="simple">
-                <Thead>
-                    <Tr>
-                        <Th>Sản phẩm</Th>
-                        <Th isNumeric>Giá</Th>
-                        <Th isNumeric>SL</Th>
-                        <Th isNumeric>Tạm tính</Th>
-                    </Tr>
-                </Thead>
-                <Tbody>
-                    {items.map((item) => (
-                        <Tr key={item.id}>
-                            <Td>
-                                <Flex align="center">
-                                    <Image 
-                                        src={item.product.mainImage} 
-                                        fallbackSrc="https://via.placeholder.com/50"
-                                        boxSize="50px" 
-                                        objectFit="cover" 
-                                        borderRadius="md" 
-                                        mr={3} 
-                                    />
-                                    <Text fontWeight="medium" noOfLines={2}>{item.product.productName}</Text>
-                                </Flex>
-                            </Td>
-                            <Td isNumeric>{formatCurrency(item.price)}</Td>
-                            <Td isNumeric>x{item.quantity}</Td>
-                            <Td isNumeric fontWeight="bold">{formatCurrency(item.totalPrice)}</Td>
-                        </Tr>
-                    ))}
-                </Tbody>
-            </Table>
+        <Box>
+            {items.map((item, index) => (
+                <Box key={item.id}>
+                    <Flex py={4} align="center">
+                        <Box bg="white" p={2} borderRadius="lg" mr={4}>
+                            <Image 
+                                src={item.product.mainImage} 
+                                fallbackSrc="https://via.placeholder.com/60"
+                                boxSize="60px" objectFit="contain" 
+                            />
+                        </Box>
+                        <Box flex="1">
+                            <Text fontWeight="bold" color={textColor} noOfLines={2}>{item.product.productName}</Text>
+                            <Text fontSize="sm" color="gray.500">x{item.quantity}</Text>
+                        </Box>
+                        <Text fontWeight="bold" color="blue.400">{formatCurrency(item.totalPrice)}</Text>
+                    </Flex>
+                    {index < items.length - 1 && <Divider borderColor={borderColor} />}
+                </Box>
+            ))}
         </Box>
     );
 };

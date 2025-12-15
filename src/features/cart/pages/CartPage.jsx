@@ -2,14 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import { 
     Box, Container, Heading, Image, Text, IconButton, Button, 
-    Flex, Divider, useToast, useColorModeValue, VStack, HStack, Spacer, Icon
+    Flex, Divider, useToast, useColorModeValue, VStack, HStack, Icon, Badge
 } from '@chakra-ui/react';
 import { AddIcon, MinusIcon, DeleteIcon, ArrowBackIcon } from '@chakra-ui/icons';
-import { FaShoppingBag } from 'react-icons/fa'; // Cần cài react-icons nếu chưa có
+import { FaShoppingBag, FaCreditCard, FaTruck } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+
 import CartService from '../../../services/cart.service';
 import { formatCurrency } from '../../../utils/format';
 import { useCart } from '../../../context/CartContext';
-import { Link } from 'react-router-dom';
 
 const CartPage = () => {
     const [cart, setCart] = useState(null);
@@ -17,294 +18,161 @@ const CartPage = () => {
     const { fetchCartCount } = useCart();
     const toast = useToast();
 
-    // --- THIẾT KẾ MÀU SẮC & GLASSMORPHISM ---
-    const bgPage = useColorModeValue("gray.50", "#000000");
-    
-    // Màu nền thẻ sản phẩm (kết hợp trong suốt + mờ)
-    const bgItem = useColorModeValue("white", "rgba(28, 28, 30, 0.6)");
+    // --- THEME COLORS ---
+    const pageBg = useColorModeValue("gray.50", "vntech.darkBg");
+    const cardBg = useColorModeValue("white", "vntech.cardBg"); // Màu card tối
     const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
-    const textColor = useColorModeValue("gray.800", "gray.100");
+    const textColor = useColorModeValue("gray.800", "white");
     const subTextColor = useColorModeValue("gray.500", "gray.400");
-    
-    // Hiệu ứng Glass cho khung thanh toán
-    const glassBg = useColorModeValue("rgba(255, 255, 255, 0.8)", "rgba(28, 28, 30, 0.7)");
-    const glassFilter = "blur(20px) saturate(180%)";
 
     const fetchCart = async () => {
         try {
             const res = await CartService.getCart();
             if (res.success) setCart(res.data);
         } catch (error) {
-            console.error("Lỗi tải giỏ hàng", error);
+            console.error(error);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchCart();
-    }, []);
+    useEffect(() => { fetchCart(); }, []);
 
     const handleUpdateQuantity = async (itemId, currentQuantity, change) => {
         const newQuantity = currentQuantity + change;
         if (newQuantity < 1) return;
-
-        // Check tồn kho
-        const item = cart.cartItems.find(i => i.id === itemId);
-        if (item && change > 0 && newQuantity > item.product.stock) {
-            if (!toast.isActive('stock-limit')) {
-                toast({
-                    id: 'stock-limit',
-                    title: "Giới hạn tồn kho",
-                    description: `Kho chỉ còn ${item.product.stock} sản phẩm.`,
-                    status: "warning",
-                    duration: 1500,
-                    isClosable: true,
-                    position: "top"
-                });
-            }
-            return; 
-        }
-
+        
+        // Optimistic UI update (optional) or just wait for reload
         try {
-            const res = await CartService.updateItem(itemId, newQuantity);
-            if (res.success) {
-                fetchCart(); 
-                fetchCartCount(); 
-            }
-        } catch (error) {
-            toast({
-                title: "Lỗi",
-                description: error.response?.data?.message,
-                status: "error",
-                duration: 1500,
-            });
+            await CartService.updateItem(itemId, newQuantity);
             fetchCart(); 
+            fetchCartCount();
+        } catch (error) {
+            toast({ title: "Lỗi", description: error.response?.data?.message, status: "error" });
         }
     };
 
     const handleRemoveItem = async (itemId) => {
-        if (!window.confirm("Xóa sản phẩm này khỏi giỏ?")) return;
+        if (!window.confirm("Xóa sản phẩm này?")) return;
         try {
             await CartService.removeItem(itemId);
             fetchCart();
             fetchCartCount();
-            toast({ title: "Đã xóa", status: "success", duration: 1000, position: 'top' });
+            toast({ title: "Đã xóa", status: "success", position: 'top' });
         } catch (error) {
             toast({ title: "Lỗi xóa", status: "error" });
         }
     };
 
-    if (loading) return <Flex justify="center" align="center" h="60vh" bg={bgPage}><Text>Đang tải...</Text></Flex>;
+    if (loading) return <Flex justify="center" align="center" h="100vh" bg={pageBg}><Text color="gray.500">Đang tải giỏ hàng...</Text></Flex>;
 
-    // GIỎ HÀNG TRỐNG
     if (!cart || cart.cartItems.length === 0) {
         return (
-            <Flex direction="column" align="center" justify="center" minH="80vh" bg={bgPage} textAlign="center" px={4}>
-                <Box bg={useColorModeValue("gray.100", "whiteAlpha.100")} p={6} borderRadius="full" mb={6}>
-                    <Icon as={FaShoppingBag} w={12} h={12} color="gray.400" />
+            <Flex direction="column" align="center" justify="center" minH="100vh" bg={pageBg} px={4}>
+                <Box bg={useColorModeValue("gray.100", "whiteAlpha.100")} p={8} borderRadius="full" mb={6}>
+                    <Icon as={FaShoppingBag} w={16} h={16} color="gray.400" />
                 </Box>
                 <Heading size="lg" mb={2} color={textColor}>Giỏ hàng trống</Heading>
-                <Text color={subTextColor} mb={8}>Có vẻ bạn chưa thêm sản phẩm nào.</Text>
-                <Button 
-                    as={Link} to="/" 
-                    size="lg" 
-                    bg="blue.500" color="white" 
-                    _hover={{ bg: "blue.600", transform: "translateY(-2px)" }}
-                    rounded="full" px={10}
-                >
-                    Tiếp tục mua sắm
+                <Text color={subTextColor} mb={8}>Chưa có siêu phẩm nào trong giỏ hàng của bạn.</Text>
+                <Button as={Link} to="/" size="lg" variant="brand" rounded="full" px={10}>
+                    Khám phá ngay
                 </Button>
             </Flex>
         );
     }
 
     return (
-        <Box bg={bgPage} minH="100vh" py={{ base: 6, md: 12 }}>
+        <Box bg={pageBg} minH="100vh" py={{ base: 6, md: 12 }}>
             <Container maxW="container.xl">
                 <Flex align="center" mb={8} gap={4}>
-                    <IconButton 
-                        icon={<ArrowBackIcon />} 
-                        variant="ghost" 
-                        onClick={() => window.history.back()}
-                        aria-label="Back"
-                        display={{ base: "flex", md: "none" }}
-                    />
+                    <IconButton icon={<ArrowBackIcon />} variant="ghost" onClick={() => window.history.back()} aria-label="Back" color={textColor} />
                     <Heading size="lg" color={textColor}>Giỏ hàng ({cart.totalItems})</Heading>
                 </Flex>
                 
-                <Flex direction={{ base: "column", lg: "row" }} gap={{ base: 6, lg: 10 }}>
-                    
-                    {/* --- DANH SÁCH SẢN PHẨM (CỘT TRÁI) --- */}
+                <Flex direction={{ base: "column", lg: "row" }} gap={8}>
+                    {/* LIST ITEMS */}
                     <VStack flex="2" align="stretch" spacing={4}>
                         {cart.cartItems.map((item) => (
                             <Flex 
                                 key={item.id} 
-                                bg={bgItem}
-                                p={{ base: 3, md: 5 }}
-                                borderRadius="2xl" 
-                                border="1px solid"
-                                borderColor={borderColor}
-                                align="center"
-                                justify="space-between"
-                                shadow="sm"
-                                transition="all 0.2s"
-                                _hover={{ shadow: "md", borderColor: "blue.200" }}
-                                direction={{ base: "column", sm: "row" }} // Mobile: Dọc, PC: Ngang
-                                gap={{ base: 4, sm: 0 }}
+                                bg={cardBg} p={4} borderRadius="2xl" 
+                                border="1px solid" borderColor={borderColor}
+                                align="center" justify="space-between"
+                                direction={{ base: "column", sm: "row" }} gap={4}
+                                transition="all 0.2s" _hover={{ borderColor: "blue.500", transform: "translateY(-2px)" }}
                             >
-                                {/* 1. Ảnh & Tên */}
                                 <Flex align="center" flex="1" w="full">
-                                    <Image 
-                                        src={item.product.mainImage} 
-                                        alt={item.product.productName} 
-                                        boxSize={{ base: "70px", md: "90px" }} 
-                                        objectFit="cover" 
-                                        borderRadius="xl"
-                                        bg="gray.100"
-                                        fallbackSrc="https://via.placeholder.com/90"
-                                    />
-                                    <Box ml={4} flex="1">
-                                        <Text fontWeight="bold" fontSize={{ base: "sm", md: "md" }} color={textColor} noOfLines={2} mb={1}>
+                                    <Box p={2} bg="white" borderRadius="xl" mr={4}>
+                                        <Image src={item.product.mainImage} boxSize="80px" objectFit="contain" />
+                                    </Box>
+                                    <Box flex="1">
+                                        <Text fontWeight="bold" color={textColor} noOfLines={2} mb={1}>
                                             {item.product.productName}
                                         </Text>
-                                        <Text fontSize="sm" color={subTextColor}>
+                                        <Text fontSize="sm" color="blue.400" fontWeight="semibold">
                                             {formatCurrency(item.price)}
                                         </Text>
-                                        {item.product.stock < 5 && (
-                                            <Text fontSize="xs" color="red.400" mt={1}>
-                                                Còn lại {item.product.stock} cái
-                                            </Text>
-                                        )}
                                     </Box>
                                 </Flex>
 
-                                {/* 2. Bộ điều khiển số lượng & Giá & Xóa */}
-                                <Flex 
-                                    align="center" 
-                                    justify={{ base: "space-between", sm: "flex-end" }} 
-                                    w={{ base: "full", sm: "auto" }}
-                                    gap={{ base: 0, sm: 6, md: 8 }}
-                                    mt={{ base: 2, sm: 0 }}
-                                >
-                                    {/* Nút + / - (Style hình con nhộng) */}
-                                    <HStack 
-                                        bg={useColorModeValue("gray.50", "whiteAlpha.100")} 
-                                        borderRadius="full" 
-                                        p={1} 
-                                        border="1px solid"
-                                        borderColor={borderColor}
-                                    >
-                                        <IconButton 
-                                            icon={<MinusIcon w={2.5} h={2.5} />} 
-                                            size="xs" 
-                                            variant="ghost"
-                                            rounded="full"
-                                            onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)}
-                                            isDisabled={item.quantity <= 1}
-                                            aria-label="Giảm"
-                                        />
-                                        <Text w="30px" textAlign="center" fontWeight="bold" fontSize="sm">
-                                            {item.quantity}
-                                        </Text>
-                                        <IconButton 
-                                            icon={<AddIcon w={2.5} h={2.5} />} 
-                                            size="xs" 
-                                            variant="ghost"
-                                            rounded="full"
-                                            onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)}
-                                            isDisabled={item.quantity >= item.product.stock}
-                                            aria-label="Tăng"
-                                        />
+                                <Flex align="center" gap={6} w={{ base: "full", sm: "auto" }} justify="space-between">
+                                    <HStack bg={useColorModeValue("gray.100", "black")} borderRadius="full" p={1}>
+                                        <IconButton icon={<MinusIcon w={2} />} size="xs" variant="ghost" isRound onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)} />
+                                        <Text w="30px" textAlign="center" fontSize="sm" fontWeight="bold" color={textColor}>{item.quantity}</Text>
+                                        <IconButton icon={<AddIcon w={2} />} size="xs" variant="ghost" isRound onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)} />
                                     </HStack>
-
-                                    {/* Giá tổng (Không bao giờ xuống dòng) */}
-                                    <Text 
-                                        fontWeight="bold" 
-                                        color="blue.500" 
-                                        fontSize="md" 
-                                        minW="100px" 
-                                        textAlign="right"
-                                        whiteSpace="nowrap" // Chống xuống dòng
-                                    >
+                                    
+                                    <Text fontWeight="bold" color={textColor} minW="100px" textAlign="right">
                                         {formatCurrency(item.price * item.quantity)}
                                     </Text>
 
-                                    {/* Nút xóa */}
-                                    <IconButton 
-                                        icon={<DeleteIcon />} 
-                                        variant="ghost" 
-                                        colorScheme="red" 
-                                        size="sm"
-                                        opacity={0.6}
-                                        _hover={{ opacity: 1, bg: "red.50" }}
-                                        onClick={() => handleRemoveItem(item.id)}
-                                        aria-label="Xóa"
-                                    />
+                                    <IconButton icon={<DeleteIcon />} variant="ghost" colorScheme="red" size="sm" onClick={() => handleRemoveItem(item.id)} />
                                 </Flex>
                             </Flex>
                         ))}
                     </VStack>
 
-                    {/* --- TỔNG KẾT ĐƠN HÀNG (CỘT PHẢI - STICKY) --- */}
-                    <Box flex="1" maxW={{ lg: "380px" }} w="full">
+                    {/* ORDER SUMMARY */}
+                    <Box flex="1" maxW={{ lg: "400px" }} w="full">
                         <Box 
-                            position="sticky" 
-                            top="100px"
-                            p={6} 
-                            borderRadius="2xl" 
-                            border="1px solid"
-                            borderColor={borderColor}
-                            bg={glassBg}            // Nền kính
-                            backdropFilter={glassFilter} // Hiệu ứng mờ
-                            shadow="lg"
+                            position="sticky" top="100px" p={6} borderRadius="2xl" 
+                            bg={cardBg} border="1px solid" borderColor={borderColor} shadow="xl"
                         >
-                            <Heading size="md" mb={6} color={textColor}>Tóm tắt</Heading>
+                            <Heading size="md" mb={6} color={textColor}>Thanh toán</Heading>
                             
-                            <VStack spacing={4} align="stretch">
-                                <Flex justify="space-between">
-                                    <Text color={subTextColor}>Tạm tính</Text>
-                                    <Text fontWeight="medium" color={textColor}>{formatCurrency(cart.totalPrice)}</Text>
+                            <VStack spacing={4} align="stretch" mb={6}>
+                                <Flex justify="space-between" color={subTextColor}>
+                                    <Text>Tạm tính</Text>
+                                    <Text color={textColor}>{formatCurrency(cart.totalPrice)}</Text>
                                 </Flex>
-                                <Flex justify="space-between">
-                                    <Text color={subTextColor}>Giảm giá</Text>
-                                    <Text fontWeight="medium" color={textColor}>0 ₫</Text>
+                                <Flex justify="space-between" color={subTextColor}>
+                                    <Text>Giảm giá</Text>
+                                    <Text color="green.400">0 ₫</Text>
                                 </Flex>
-                                <Flex justify="space-between">
-                                    <Text color={subTextColor}>Vận chuyển</Text>
-                                    <Text color="green.500" fontWeight="bold">Miễn phí</Text>
+                                <Flex justify="space-between" color={subTextColor}>
+                                    <Text>Vận chuyển</Text>
+                                    <Badge colorScheme="green">Miễn phí</Badge>
                                 </Flex>
-                                
                                 <Divider borderColor={borderColor} />
-                                
                                 <Flex justify="space-between" align="center">
                                     <Text fontSize="lg" fontWeight="bold" color={textColor}>Tổng cộng</Text>
-                                    <Text fontSize="xl" fontWeight="bold" color="blue.500">
+                                    <Text fontSize="2xl" fontWeight="bold" bgGradient="linear(to-r, blue.400, purple.500)" bgClip="text">
                                         {formatCurrency(cart.totalPrice)}
                                     </Text>
                                 </Flex>
-
-                                <Button 
-                                    w="full" 
-                                    size="lg" 
-                                    bg="blue.500" 
-                                    color="white" 
-                                    _hover={{ bg: "blue.600", transform: "scale(1.02)", shadow: "lg" }}
-                                    _active={{ transform: "scale(0.98)" }}
-                                    transition="all 0.2s"
-                                    borderRadius="xl"
-                                    as={Link} 
-                                    to="/checkout"
-                                    mt={4}
-                                >
-                                    Thanh toán ngay
-                                </Button>
-                                
-                                <HStack justify="center" pt={2}>
-                                    <Icon as={FaShoppingBag} color="gray.400" />
-                                    <Text fontSize="xs" color="gray.500">Bảo mật thanh toán 100%</Text>
-                                </HStack>
                             </VStack>
+
+                            <Button 
+                                w="full" size="lg" variant="brand" 
+                                as={Link} to="/checkout" h="56px" fontSize="lg"
+                                rightIcon={<Icon as={FaCreditCard} />}
+                            >
+                                TIẾN HÀNH ĐẶT HÀNG
+                            </Button>
+                            
+                            <HStack justify="center" mt={4} spacing={4} color="gray.500">
+                                <Icon as={FaTruck} /><Text fontSize="xs">Freeship toàn quốc</Text>
+                            </HStack>
                         </Box>
                     </Box>
                 </Flex>

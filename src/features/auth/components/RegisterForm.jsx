@@ -4,66 +4,55 @@ import {
 } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 
-const RegisterForm = ({ onSubmit, isLoading }) => {
+const RegisterForm = ({ onSubmit, isLoading, isTransparent }) => {
     const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
     const toast = useToast();
 
-    const bg = useColorModeValue("white", "gray.800");
+    const bg = isTransparent ? "transparent" : useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.800", "white");
-    const borderColor = useColorModeValue("gray.200", "gray.600");
+    const inputBg = useColorModeValue("gray.50", "whiteAlpha.100");
+    const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
-            toast({ title: "Lỗi", description: "Mật khẩu nhập lại không khớp", status: "error", duration: 3000 });
+            toast({ title: "Lỗi", description: "Mật khẩu không khớp", status: "error", position: 'top' });
             return;
         }
         onSubmit(formData);
     };
 
     return (
-        <Box 
-            bg={bg} 
-            p={8} 
-            rounded="lg" 
-            shadow="lg" 
-            w={{ base: "90%", md: "450px" }} 
-            borderWidth="1px"
-            borderColor={borderColor}
-        >
+        <Box w="full" bg={bg}>
             <VStack spacing={4} as="form" onSubmit={handleSubmit}>
-                <Text fontSize="2xl" fontWeight="bold" color="blue.500">Đăng Ký</Text>
-                
                 <FormControl isRequired>
-                    <FormLabel color={textColor}>Họ và tên (Username)</FormLabel>
-                    <Input name="username" value={formData.username} onChange={handleChange} placeholder="Nguyễn Văn A" color={textColor} />
+                    <FormLabel color={textColor}>Họ tên</FormLabel>
+                    <Input name="username" value={formData.username} onChange={handleChange} placeholder="Nguyễn Văn A" bg={inputBg} borderColor={borderColor} color={textColor} />
                 </FormControl>
 
                 <FormControl isRequired>
                     <FormLabel color={textColor}>Email</FormLabel>
-                    <Input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="email@example.com" color={textColor} />
+                    <Input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="email@example.com" bg={inputBg} borderColor={borderColor} color={textColor} />
                 </FormControl>
 
                 <FormControl isRequired>
                     <FormLabel color={textColor}>Mật khẩu</FormLabel>
-                    <Input name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Tối thiểu 6 ký tự" color={textColor} />
+                    <Input name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Tối thiểu 6 ký tự" bg={inputBg} borderColor={borderColor} color={textColor} />
                 </FormControl>
 
                 <FormControl isRequired>
                     <FormLabel color={textColor}>Nhập lại mật khẩu</FormLabel>
-                    <Input name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} placeholder="Xác nhận mật khẩu" color={textColor} />
+                    <Input name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} placeholder="Xác nhận" bg={inputBg} borderColor={borderColor} color={textColor} />
                 </FormControl>
 
-                <Button type="submit" colorScheme="blue" w="full" isLoading={isLoading} loadingText="Đang xử lý">
-                    Đăng ký tài khoản
+                <Button type="submit" w="full" size="lg" bgGradient="linear(to-r, blue.500, purple.600)" _hover={{ bgGradient: "linear(to-r, blue.600, purple.700)" }} color="white" isLoading={isLoading}>
+                    Đăng ký
                 </Button>
 
-                <Text fontSize="sm" color={textColor}>
-                    Đã có tài khoản? <ChakraLink as={Link} to="/login" color="blue.500">Đăng nhập</ChakraLink>
+                <Text fontSize="sm" color="gray.400">
+                    Đã có tài khoản? <ChakraLink as={Link} to="/login" color="blue.400" fontWeight="bold">Đăng nhập</ChakraLink>
                 </Text>
             </VStack>
         </Box>

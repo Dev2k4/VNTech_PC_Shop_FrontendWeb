@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Flex, useToast, useColorModeValue } from "@chakra-ui/react";
+import { Flex, useToast, useColorModeValue, Box, Heading, Text, Image } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../../../services/auth.service";
 import LoginForm from "../components/LoginForm";
@@ -10,85 +10,84 @@ const LoginPage = () => {
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const { fetchCartCount } = useCart();
-  const bg = useColorModeValue("gray.50", "gray.900");
 
-  // Hàm giải mã JWT token (decode base64)
+  // Background đẹp hơn
+  const bgImage = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop"; 
+
   const parseJwt = (token) => {
-    try {
-      return JSON.parse(atob(token.split('.')[1]));
-    } catch (e) {
-      return null;
-    }
+    try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
   };
 
   const handleLogin = async (formData) => {
     setIsLoading(true);
     try {
-      // 1. Gọi API Login
       const loginRes = await AuthService.login(formData);
-      
       if (loginRes.success || loginRes.data) {
         const { accessToken, refreshToken, role } = loginRes.data;
-
-        // 2. Lưu token vào localStorage
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("role", role);
 
-        // --- BƯỚC QUAN TRỌNG: LẤY THÔNG TIN USER ---
-        
-        // Cách 1: Giải mã Token để lấy Email/User ngay lập tức (Dự phòng nhanh nhất)
+        // Get user info logic...
         const decoded = parseJwt(accessToken);
-        if (decoded && decoded.sub) {
-             localStorage.setItem("userName", decoded.sub); // 'sub' thường là email
-             // Lưu ID tạm để Header nhận diện được User
-             localStorage.setItem("userId", "user-id-placeholder"); 
-        }
-
-        // Cách 2: Gọi API Profile theo Swagger (GET /user/profile) để lấy tên thật
+        if (decoded && decoded.sub) localStorage.setItem("userName", decoded.sub);
+        
         try {
             const profileRes = await AuthService.getProfile();
-            // Swagger response: { success: true, data: { id, fullName, email... } }
-            const userInfo = profileRes.data || profileRes; 
-            
+            const userInfo = profileRes.data || profileRes;
             if (userInfo) {
-                localStorage.setItem("userId", userInfo.id);
-                // Ưu tiên hiển thị: Username -> FullName -> Email
                 const displayName = userInfo.username || userInfo.fullName || userInfo.email;
                 localStorage.setItem("userName", displayName);
             }
-        } catch (profileErr) {
-            console.error("Lỗi lấy profile, sẽ sử dụng thông tin từ token:", profileErr);
-        }
+        } catch (e) {}
 
-        // 3. Bắn sự kiện "auth-change" để Header cập nhật ngay lập tức
         window.dispatchEvent(new Event("auth-change"));
-        
-        // 4. Cập nhật giỏ hàng
         await fetchCartCount();
+        toast({ title: "Đăng nhập thành công", status: "success", duration: 2000, position: 'top' });
 
-        toast({ title: "Đăng nhập thành công", status: "success", duration: 2000, isClosable: true });
-
-        // 5. Chuyển hướng
-        if (role === "ADMIN" || role === "ROLE_ADMIN") {
-          navigate("/admin");
-        } else {
-          navigate("/");
-        }
-      } else {
-        throw new Error(loginRes.message || "Đăng nhập thất bại");
+        if (role === "ADMIN" || role === "ROLE_ADMIN") navigate("/admin");
+        else navigate("/");
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.message || "Email hoặc mật khẩu không đúng";
-      toast({ title: "Lỗi đăng nhập", description: errorMsg, status: "error", duration: 3000, isClosable: true });
+      toast({ title: "Lỗi đăng nhập", description: "Email hoặc mật khẩu không đúng", status: "error", position: 'top' });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Flex minH="100vh" align="center" justify="center" bg={bg}>
-      <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+    <Flex minH="100vh" align="center" justify="center" position="relative" overflow="hidden">
+      {/* Background Image with Overlay */}
+      <Box 
+        position="absolute" top="0" left="0" w="100%" h="100%" 
+        bgImage={`url(${bgImage})`} bgSize="cover" bgPosition="center"
+        zIndex="-2"
+      />
+      <Box 
+        position="absolute" top="0" left="0" w="100%" h="100%" 
+        bg="rgba(0, 0, 0, 0.7)" backdropFilter="blur(8px)" 
+        zIndex="-1"
+      />
+
+      {/* Login Card */}
+      <Box 
+        zIndex="1" 
+        w={{ base: "90%", md: "450px" }}
+        bg={useColorModeValue("whiteAlpha.900", "blackAlpha.800")}
+        p={8} 
+        borderRadius="2xl" 
+        boxShadow="2xl"
+        border="1px solid"
+        borderColor="whiteAlpha.200"
+        backdropFilter="blur(20px)"
+      >
+        <Box textAlign="center" mb={6}>
+            <Heading size="xl" mb={2} bgGradient="linear(to-r, blue.400, purple.500)" bgClip="text">VNTech ID</Heading>
+            <Text color="gray.400">Đăng nhập để tiếp tục trải nghiệm</Text>
+        </Box>
+        
+        <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+      </Box>
     </Flex>
   );
 };
