@@ -5,9 +5,11 @@ import {
 import { Link } from 'react-router-dom';
 
 const RegisterForm = ({ onSubmit, isLoading, isTransparent }) => {
-    const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
+    // Chỉ giữ lại email, password và confirmPassword
+    const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '' });
     const toast = useToast();
 
+    // Style colors
     const bg = isTransparent ? "transparent" : useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.800", "white");
     const inputBg = useColorModeValue("gray.50", "whiteAlpha.100");
@@ -18,36 +20,72 @@ const RegisterForm = ({ onSubmit, isLoading, isTransparent }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
-            toast({ title: "Lỗi", description: "Mật khẩu không khớp", status: "error", position: 'top' });
+            toast({ 
+                title: "Lỗi", 
+                description: "Mật khẩu xác nhận không khớp", 
+                status: "error", 
+                position: 'top' 
+            });
             return;
         }
-        onSubmit(formData);
+        // Gọi hàm submit từ prop, chỉ truyền email và password
+        onSubmit({ email: formData.email, password: formData.password });
     };
 
     return (
         <Box w="full" bg={bg}>
             <VStack spacing={4} as="form" onSubmit={handleSubmit}>
                 <FormControl isRequired>
-                    <FormLabel color={textColor}>Họ tên</FormLabel>
-                    <Input name="username" value={formData.username} onChange={handleChange} placeholder="Nguyễn Văn A" bg={inputBg} borderColor={borderColor} color={textColor} />
-                </FormControl>
-
-                <FormControl isRequired>
                     <FormLabel color={textColor}>Email</FormLabel>
-                    <Input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="email@example.com" bg={inputBg} borderColor={borderColor} color={textColor} />
+                    <Input 
+                        name="email" 
+                        type="email" 
+                        value={formData.email} 
+                        onChange={handleChange} 
+                        placeholder="email@example.com" 
+                        bg={inputBg} 
+                        borderColor={borderColor} 
+                        color={textColor} 
+                    />
                 </FormControl>
 
                 <FormControl isRequired>
                     <FormLabel color={textColor}>Mật khẩu</FormLabel>
-                    <Input name="password" type="password" value={formData.password} onChange={handleChange} placeholder="Tối thiểu 6 ký tự" bg={inputBg} borderColor={borderColor} color={textColor} />
+                    <Input 
+                        name="password" 
+                        type="password" 
+                        value={formData.password} 
+                        onChange={handleChange} 
+                        placeholder="Tối thiểu 6 ký tự" 
+                        bg={inputBg} 
+                        borderColor={borderColor} 
+                        color={textColor} 
+                    />
                 </FormControl>
 
                 <FormControl isRequired>
                     <FormLabel color={textColor}>Nhập lại mật khẩu</FormLabel>
-                    <Input name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} placeholder="Xác nhận" bg={inputBg} borderColor={borderColor} color={textColor} />
+                    <Input 
+                        name="confirmPassword" 
+                        type="password" 
+                        value={formData.confirmPassword} 
+                        onChange={handleChange} 
+                        placeholder="Xác nhận mật khẩu" 
+                        bg={inputBg} 
+                        borderColor={borderColor} 
+                        color={textColor} 
+                    />
                 </FormControl>
 
-                <Button type="submit" w="full" size="lg" bgGradient="linear(to-r, blue.500, purple.600)" _hover={{ bgGradient: "linear(to-r, blue.600, purple.700)" }} color="white" isLoading={isLoading}>
+                <Button 
+                    type="submit" 
+                    w="full" 
+                    size="lg" 
+                    bgGradient="linear(to-r, blue.500, purple.600)" 
+                    _hover={{ bgGradient: "linear(to-r, blue.600, purple.700)" }} 
+                    color="white" 
+                    isLoading={isLoading}
+                >
                     Đăng ký
                 </Button>
 
