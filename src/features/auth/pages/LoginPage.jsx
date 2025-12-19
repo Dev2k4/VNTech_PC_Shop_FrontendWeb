@@ -11,45 +11,59 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { fetchCartCount } = useCart();
 
-  // Background đẹp hơn
+  // Background image công nghệ
   const bgImage = "https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop"; 
-
-  const parseJwt = (token) => {
-    try { return JSON.parse(atob(token.split('.')[1])); } catch (e) { return null; }
-  };
 
   const handleLogin = async (formData) => {
     setIsLoading(true);
     try {
       const loginRes = await AuthService.login(formData);
-      if (loginRes.success || loginRes.data) {
-        const { accessToken, refreshToken, role } = loginRes.data;
+      
+      // Kiểm tra response thành công
+      if (loginRes.success && loginRes.data) {
+        const { accessToken, refreshToken } = loginRes.data;
+        
+        // 1. Lưu token
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
-        localStorage.setItem("role", role);
 
-        // Get user info logic...
-        const decoded = parseJwt(accessToken);
-        if (decoded && decoded.sub) localStorage.setItem("userName", decoded.sub);
-        
+        // 2. Lấy thông tin User (để biết Role và Tên)
         try {
             const profileRes = await AuthService.getProfile();
-            const userInfo = profileRes.data || profileRes;
-            if (userInfo) {
-                const displayName = userInfo.username || userInfo.fullName || userInfo.email;
-                localStorage.setItem("userName", displayName);
+            if (profileRes.success) {
+                const user = profileRes.data;
+                localStorage.setItem("role", user.roleName || "USER"); // Lưu role
+                localStorage.setItem("userName", user.fullName || user.username); // Lưu tên hiển thị
             }
-        } catch (e) {}
+        } catch (e) {
+            console.error("Không lấy được profile", e);
+        }
 
-        window.dispatchEvent(new Event("auth-change"));
+        // 3. Cập nhật giỏ hàng và thông báo
         await fetchCartCount();
-        toast({ title: "Đăng nhập thành công", status: "success", duration: 2000, position: 'top' });
+        
+        // Dispatch event để Header cập nhật lại Avatar/Tên ngay lập tức
+        window.dispatchEvent(new Event("auth-change"));
 
-        if (role === "ADMIN" || role === "ROLE_ADMIN") navigate("/admin");
-        else navigate("/");
+        toast({ title: "Đăng nhập thành công", status: "success", duration: 2000 });
+        
+        // 4. Điều hướng dựa trên Role
+        const role = localStorage.getItem("role");
+        if (role === "ADMIN" || role === "ROLE_ADMIN") {
+            navigate("/admin");
+        } else {
+            navigate("/");
+        }
+      } else {
+        throw new Error(loginRes.message || "Đăng nhập thất bại");
       }
     } catch (error) {
-      toast({ title: "Lỗi đăng nhập", description: "Email hoặc mật khẩu không đúng", status: "error", position: 'top' });
+      toast({ 
+          title: "Lỗi đăng nhập", 
+          description: error.response?.data?.message || "Email hoặc mật khẩu không đúng", 
+          status: "error", 
+          position: 'top' 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -79,14 +93,15 @@ const LoginPage = () => {
         boxShadow="2xl"
         border="1px solid"
         borderColor="whiteAlpha.200"
-        backdropFilter="blur(20px)"
       >
         <Box textAlign="center" mb={6}>
-            <Heading size="xl" mb={2} bgGradient="linear(to-r, blue.400, purple.500)" bgClip="text">VNTech ID</Heading>
-            <Text color="gray.400">Đăng nhập để tiếp tục trải nghiệm</Text>
+            <Heading size="xl" mb={2} bgGradient="linear(to-r, blue.400, purple.600)" bgClip="text">
+                Chào mừng trở lại
+            </Heading>
+            <Text color="gray.500">Đăng nhập để tiếp tục mua sắm</Text>
         </Box>
-        
-        <LoginForm onSubmit={handleLogin} isLoading={isLoading} />
+
+        <LoginForm onSubmit={handleLogin} isLoading={isLoading} isTransparent={true} />
       </Box>
     </Flex>
   );

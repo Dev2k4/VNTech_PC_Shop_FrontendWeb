@@ -1,11 +1,10 @@
-// src/features/cart/pages/CartPage.jsx
 import React, { useEffect, useState } from 'react';
 import { 
     Box, Container, Heading, Image, Text, IconButton, Button, 
-    Flex, Divider, useToast, useColorModeValue, VStack, HStack, Icon, Badge
+    Flex, Divider, useToast, useColorModeValue, VStack, HStack, Icon, Badge, Checkbox, Spinner
 } from '@chakra-ui/react';
 import { AddIcon, MinusIcon, DeleteIcon, ArrowBackIcon } from '@chakra-ui/icons';
-import { FaShoppingBag, FaCreditCard, FaTruck } from 'react-icons/fa';
+import { FaCreditCard, FaTruck, FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 import CartService from '../../../services/cart.service';
@@ -18,17 +17,19 @@ const CartPage = () => {
     const { fetchCartCount } = useCart();
     const toast = useToast();
 
-    // --- THEME COLORS ---
+    // Theme Colors
     const pageBg = useColorModeValue("gray.50", "vntech.darkBg");
-    const cardBg = useColorModeValue("white", "vntech.cardBg"); // Màu card tối
+    const cardBg = useColorModeValue("white", "vntech.cardBg");
     const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
     const textColor = useColorModeValue("gray.800", "white");
-    const subTextColor = useColorModeValue("gray.500", "gray.400");
 
     const fetchCart = async () => {
         try {
             const res = await CartService.getCart();
-            if (res.success) setCart(res.data);
+            if (res.success) {
+                setCart(res.data);
+                fetchCartCount(); // Đồng bộ số lượng trên Header
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -36,146 +37,178 @@ const CartPage = () => {
         }
     };
 
-    useEffect(() => { fetchCart(); }, []);
+    useEffect(() => {
+        fetchCart();
+    }, []);
 
-    const handleUpdateQuantity = async (itemId, currentQuantity, change) => {
-        const newQuantity = currentQuantity + change;
+    // Xử lý tăng giảm số lượng
+    const handleUpdateQuantity = async (itemId, newQuantity) => {
         if (newQuantity < 1) return;
-        
-        // Optimistic UI update (optional) or just wait for reload
         try {
             await CartService.updateItem(itemId, newQuantity);
-            fetchCart(); 
-            fetchCartCount();
+            fetchCart(); // Load lại để tính lại tiền
         } catch (error) {
-            toast({ title: "Lỗi", description: error.response?.data?.message, status: "error" });
+            toast({ title: 'Lỗi', description: 'Không thể cập nhật số lượng', status: 'error' });
         }
     };
 
+    // Xử lý xóa item
     const handleRemoveItem = async (itemId) => {
-        if (!window.confirm("Xóa sản phẩm này?")) return;
         try {
             await CartService.removeItem(itemId);
+            toast({ title: 'Đã xóa', status: 'success', duration: 1000 });
             fetchCart();
-            fetchCartCount();
-            toast({ title: "Đã xóa", status: "success", position: 'top' });
         } catch (error) {
-            toast({ title: "Lỗi xóa", status: "error" });
+            toast({ title: 'Lỗi', description: 'Không thể xóa sản phẩm', status: 'error' });
         }
     };
 
-    if (loading) return <Flex justify="center" align="center" h="100vh" bg={pageBg}><Text color="gray.500">Đang tải giỏ hàng...</Text></Flex>;
+    // --- LOGIC MỚI: CHỌN SẢN PHẨM ---
+    const handleSelectItem = async (itemId, isChecked) => {
+        try {
+            // Gọi API select update lên BE
+            await CartService.updateSelected([itemId], isChecked);
+            fetchCart(); // Load lại để BE trả về tổng tiền mới
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
-    if (!cart || cart.cartItems.length === 0) {
-        return (
-            <Flex direction="column" align="center" justify="center" minH="100vh" bg={pageBg} px={4}>
-                <Box bg={useColorModeValue("gray.100", "whiteAlpha.100")} p={8} borderRadius="full" mb={6}>
-                    <Icon as={FaShoppingBag} w={16} h={16} color="gray.400" />
-                </Box>
-                <Heading size="lg" mb={2} color={textColor}>Giỏ hàng trống</Heading>
-                <Text color={subTextColor} mb={8}>Chưa có siêu phẩm nào trong giỏ hàng của bạn.</Text>
-                <Button as={Link} to="/" size="lg" variant="brand" rounded="full" px={10}>
-                    Khám phá ngay
-                </Button>
-            </Flex>
-        );
-    }
+    const handleSelectAll = async (e) => {
+        const isChecked = e.target.checked;
+        const allIds = cart.cartItems.map(item => item.id);
+        try {
+            await CartService.updateSelected(allIds, isChecked);
+            fetchCart();
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    if (loading) return <Flex justify="center" py={20} bg={pageBg} minH="100vh"><Spinner size="xl" color="blue.500"/></Flex>;
+
+    // Kiểm tra xem có đang chọn tất cả không
+    const isAllSelected = cart?.cartItems?.length > 0 && cart?.cartItems?.every(item => item.selected);
+    const hasSelectedItems = cart?.selectedItems > 0;
 
     return (
-        <Box bg={pageBg} minH="100vh" py={{ base: 6, md: 12 }}>
+        <Box bg={pageBg} minH="100vh" py={10}>
             <Container maxW="container.xl">
-                <Flex align="center" mb={8} gap={4}>
-                    <IconButton icon={<ArrowBackIcon />} variant="ghost" onClick={() => window.history.back()} aria-label="Back" color={textColor} />
-                    <Heading size="lg" color={textColor}>Giỏ hàng ({cart.totalItems})</Heading>
-                </Flex>
-                
-                <Flex direction={{ base: "column", lg: "row" }} gap={8}>
-                    {/* LIST ITEMS */}
-                    <VStack flex="2" align="stretch" spacing={4}>
-                        {cart.cartItems.map((item) => (
-                            <Flex 
-                                key={item.id} 
-                                bg={cardBg} p={4} borderRadius="2xl" 
-                                border="1px solid" borderColor={borderColor}
-                                align="center" justify="space-between"
-                                direction={{ base: "column", sm: "row" }} gap={4}
-                                transition="all 0.2s" _hover={{ borderColor: "blue.500", transform: "translateY(-2px)" }}
-                            >
-                                <Flex align="center" flex="1" w="full">
-                                    <Box p={2} bg="white" borderRadius="xl" mr={4}>
-                                        <Image src={item.product.mainImage} boxSize="80px" objectFit="contain" />
-                                    </Box>
-                                    <Box flex="1">
-                                        <Text fontWeight="bold" color={textColor} noOfLines={2} mb={1}>
-                                            {item.product.productName}
-                                        </Text>
-                                        <Text fontSize="sm" color="blue.400" fontWeight="semibold">
-                                            {formatCurrency(item.price)}
-                                        </Text>
-                                    </Box>
-                                </Flex>
+                <Button leftIcon={<ArrowBackIcon />} variant="ghost" mb={6} as={Link} to="/">Tiếp tục mua sắm</Button>
+                <Heading mb={8} size="lg" color={textColor}>Giỏ hàng của bạn</Heading>
 
-                                <Flex align="center" gap={6} w={{ base: "full", sm: "auto" }} justify="space-between">
-                                    <HStack bg={useColorModeValue("gray.100", "black")} borderRadius="full" p={1}>
-                                        <IconButton icon={<MinusIcon w={2} />} size="xs" variant="ghost" isRound onClick={() => handleUpdateQuantity(item.id, item.quantity, -1)} />
-                                        <Text w="30px" textAlign="center" fontSize="sm" fontWeight="bold" color={textColor}>{item.quantity}</Text>
-                                        <IconButton icon={<AddIcon w={2} />} size="xs" variant="ghost" isRound onClick={() => handleUpdateQuantity(item.id, item.quantity, 1)} />
-                                    </HStack>
-                                    
-                                    <Text fontWeight="bold" color={textColor} minW="100px" textAlign="right">
-                                        {formatCurrency(item.price * item.quantity)}
-                                    </Text>
-
-                                    <IconButton icon={<DeleteIcon />} variant="ghost" colorScheme="red" size="sm" onClick={() => handleRemoveItem(item.id)} />
-                                </Flex>
-                            </Flex>
-                        ))}
-                    </VStack>
-
-                    {/* ORDER SUMMARY */}
-                    <Box flex="1" maxW={{ lg: "400px" }} w="full">
-                        <Box 
-                            position="sticky" top="100px" p={6} borderRadius="2xl" 
-                            bg={cardBg} border="1px solid" borderColor={borderColor} shadow="xl"
-                        >
-                            <Heading size="md" mb={6} color={textColor}>Thanh toán</Heading>
-                            
-                            <VStack spacing={4} align="stretch" mb={6}>
-                                <Flex justify="space-between" color={subTextColor}>
-                                    <Text>Tạm tính</Text>
-                                    <Text color={textColor}>{formatCurrency(cart.totalPrice)}</Text>
-                                </Flex>
-                                <Flex justify="space-between" color={subTextColor}>
-                                    <Text>Giảm giá</Text>
-                                    <Text color="green.400">0 ₫</Text>
-                                </Flex>
-                                <Flex justify="space-between" color={subTextColor}>
-                                    <Text>Vận chuyển</Text>
-                                    <Badge colorScheme="green">Miễn phí</Badge>
-                                </Flex>
-                                <Divider borderColor={borderColor} />
-                                <Flex justify="space-between" align="center">
-                                    <Text fontSize="lg" fontWeight="bold" color={textColor}>Tổng cộng</Text>
-                                    <Text fontSize="2xl" fontWeight="bold" bgGradient="linear(to-r, blue.400, purple.500)" bgClip="text">
-                                        {formatCurrency(cart.totalPrice)}
-                                    </Text>
-                                </Flex>
-                            </VStack>
-
-                            <Button 
-                                w="full" size="lg" variant="brand" 
-                                as={Link} to="/checkout" h="56px" fontSize="lg"
-                                rightIcon={<Icon as={FaCreditCard} />}
-                            >
-                                TIẾN HÀNH ĐẶT HÀNG
-                            </Button>
-                            
-                            <HStack justify="center" mt={4} spacing={4} color="gray.500">
-                                <Icon as={FaTruck} /><Text fontSize="xs">Freeship toàn quốc</Text>
-                            </HStack>
-                        </Box>
+                {!cart || cart.cartItems.length === 0 ? (
+                    <Box textAlign="center" py={20} bg={cardBg} borderRadius="2xl">
+                        <Text color="gray.500" mb={4}>Giỏ hàng đang trống</Text>
+                        <Button as={Link} to="/" colorScheme="blue">Mua ngay</Button>
                     </Box>
-                </Flex>
+                ) : (
+                    <Flex direction={{ base: "column", lg: "row" }} gap={8}>
+                        {/* LEFT: CART ITEMS */}
+                        <Box flex="2">
+                            {/* Header List */}
+                            <Flex bg={cardBg} p={4} borderRadius="xl" mb={4} align="center" border="1px solid" borderColor={borderColor}>
+                                <Checkbox 
+                                    isChecked={isAllSelected} 
+                                    onChange={handleSelectAll} 
+                                    colorScheme="blue" 
+                                    mr={4}
+                                >
+                                    Tất cả ({cart.totalItems} sản phẩm)
+                                </Checkbox>
+                                <Icon as={FaTrash} color="gray.400" cursor="pointer" ml="auto" />
+                            </Flex>
+
+                            <VStack spacing={4} align="stretch">
+                                {cart.cartItems.map((item) => (
+                                    <Flex key={item.id} bg={cardBg} p={4} borderRadius="xl" align="center" border="1px solid" borderColor={borderColor}>
+                                        <Checkbox 
+                                            isChecked={item.selected} 
+                                            onChange={(e) => handleSelectItem(item.id, e.target.checked)}
+                                            colorScheme="blue" 
+                                            mr={4}
+                                        />
+                                        
+                                        <Image 
+                                            src={item.product.mainImage} 
+                                            alt={item.product.productName}
+                                            boxSize="80px" 
+                                            objectFit="contain" 
+                                            mr={4} 
+                                            borderRadius="md"
+                                            bg="white"
+                                        />
+                                        
+                                        <Box flex="1">
+                                            <Text fontWeight="bold" noOfLines={2} color={textColor}>{item.product.productName}</Text>
+                                            <Text fontSize="sm" color="gray.500">{item.product.model}</Text>
+                                            <Text fontWeight="bold" color="blue.500" mt={1}>{formatCurrency(item.price)}</Text>
+                                        </Box>
+
+                                        <Flex align="center" border="1px solid" borderColor="gray.200" borderRadius="md">
+                                            <IconButton 
+                                                icon={<MinusIcon />} size="xs" variant="ghost" 
+                                                onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                            />
+                                            <Text px={2} fontSize="sm" fontWeight="bold">{item.quantity}</Text>
+                                            <IconButton 
+                                                icon={<AddIcon />} size="xs" variant="ghost" 
+                                                onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                            />
+                                        </Flex>
+
+                                        <IconButton 
+                                            icon={<DeleteIcon />} 
+                                            variant="ghost" colorScheme="red" ml={4}
+                                            onClick={() => handleRemoveItem(item.id)}
+                                        />
+                                    </Flex>
+                                ))}
+                            </VStack>
+                        </Box>
+
+                        {/* RIGHT: SUMMARY */}
+                        <Box flex="1">
+                            <Box bg={cardBg} p={6} borderRadius="2xl" border="1px solid" borderColor={borderColor} position="sticky" top="20px">
+                                <Heading size="md" mb={6} color={textColor}>Thanh toán</Heading>
+                                <VStack spacing={4} align="stretch" mb={6}>
+                                    <Flex justify="space-between">
+                                        <Text color="gray.500">Đã chọn:</Text>
+                                        <Text fontWeight="bold">{cart.selectedItems} sản phẩm</Text>
+                                    </Flex>
+                                    <Flex justify="space-between">
+                                        <Text color="gray.500">Tạm tính:</Text>
+                                        <Text fontWeight="bold">{formatCurrency(cart.selectedItemsPrice)}</Text>
+                                    </Flex>
+                                    <Flex justify="space-between">
+                                        <Text color="gray.500">Vận chuyển:</Text>
+                                        <Badge colorScheme="green">Miễn phí</Badge>
+                                    </Flex>
+                                    <Divider borderColor={borderColor} />
+                                    <Flex justify="space-between" align="center">
+                                        <Text fontSize="lg" fontWeight="bold" color={textColor}>Tổng cộng</Text>
+                                        <Text fontSize="2xl" fontWeight="bold" bgGradient="linear(to-r, blue.400, purple.500)" bgClip="text">
+                                            {formatCurrency(cart.selectedItemsPrice)}
+                                        </Text>
+                                    </Flex>
+                                </VStack>
+
+                                <Button 
+                                    w="full" size="lg" variant="brand" 
+                                    as={Link} to="/checkout" h="56px" fontSize="lg"
+                                    rightIcon={<Icon as={FaCreditCard} />}
+                                    isDisabled={!hasSelectedItems} // Disable nếu chưa chọn gì
+                                >
+                                    MUA HÀNG ({cart.selectedItems})
+                                </Button>
+                                
+                                <HStack justify="center" mt={4} spacing={4} color="gray.500">
+                                    <Icon as={FaTruck} /><Text fontSize="xs">Freeship toàn quốc</Text>
+                                </HStack>
+                            </Box>
+                        </Box>
+                    </Flex>
+                )}
             </Container>
         </Box>
     );

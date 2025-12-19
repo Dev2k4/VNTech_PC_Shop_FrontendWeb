@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import {
-    Box, Button, FormControl, FormLabel, Input, VStack, Text, Link as ChakraLink, useColorModeValue
+    Box, Button, FormControl, FormLabel, Input, VStack, Text, Link as ChakraLink, useColorModeValue, Flex
 } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 
 const LoginForm = ({ onSubmit, isLoading, isTransparent }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
 
-    // Nếu isTransparent = true (được gọi từ trang Login có background), thì bg = transparent
+    // Style colors
     const bg = isTransparent ? "transparent" : useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.800", "white");
-    const inputBg = useColorModeValue("gray.50", "whiteAlpha.100");
+    const inputBg = isTransparent ? useColorModeValue("gray.50", "whiteAlpha.200") : useColorModeValue("gray.50", "whiteAlpha.100");
     const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,6 +38,13 @@ const LoginForm = ({ onSubmit, isLoading, isTransparent }) => {
                         _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
                     />
                 </FormControl>
+
+                {/* --- MỚI: LINK QUÊN MẬT KHẨU --- */}
+                <Flex w="full" justify="flex-end">
+                    <ChakraLink as={Link} to="/forgot-password" color="blue.400" fontSize="sm" fontWeight="medium">
+                        Quên mật khẩu?
+                    </ChakraLink>
+                </Flex>
 
                 <Button 
                     type="submit" w="full" size="lg" 

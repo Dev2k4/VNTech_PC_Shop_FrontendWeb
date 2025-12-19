@@ -11,11 +11,12 @@ import CheckoutPage from '../features/cart/pages/CheckoutPage';
 
 import LoginPage from '../features/auth/pages/LoginPage';
 import RegisterPage from '../features/auth/pages/RegisterPage';
+import ForgotPasswordPage from '../features/auth/pages/ForgotPasswordPage';
 
 import ProfilePage from '../features/user/pages/ProfilePage';
 import OrderHistoryPage from '../features/order/pages/OrderHistoryPage';
 import OrderDetailPage from '../features/order/pages/OrderDetailPage';
-
+import PaymentResultPage from '../features/cart/pages/PaymentResultPage';
 import AdminLayout from '../layouts/AdminLayout';
 import AdminDashboard from '../features/admin/pages/AdminDashboard';
 import AdminCategoryPage from '../features/admin/pages/AdminCategoryPage';
@@ -32,7 +33,7 @@ const AppRoutes = () => {
         <Route path="products/:id" element={<ProductDetailPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
-        
+        <Route path="payment/return" element={<PaymentResultPage />} />
         {/* Route User */}
         <Route path="profile" element={<ProfilePage />} />
         <Route path="user/orders" element={<OrderHistoryPage />} />
@@ -42,7 +43,7 @@ const AppRoutes = () => {
       {/* --- AUTH ROUTES --- */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       {/* --- ADMIN ROUTES --- */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />

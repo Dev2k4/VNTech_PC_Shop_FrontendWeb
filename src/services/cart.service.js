@@ -6,7 +6,6 @@ const CartService = {
     },
 
     addToCart: (data) => {
-        // Ép kiểu dữ liệu sang số để tránh lỗi 400 từ Backend
         const payload = {
             productId: parseInt(data.productId),
             quantity: parseInt(data.quantity)
@@ -27,11 +26,9 @@ const CartService = {
         return axiosClient.get('/cart/count');
     },
     
-    // Thêm hàm updateSelectedItems nếu chưa có (dựa theo Swagger)
-    updateSelectedItems: (itemIds, selected) => {
-        // itemIds là mảng [1, 2], selected là boolean
-        // Swagger: PUT /cart/items/select?itemIds=1,2&selected=true
-        // Axios params serializer sẽ tự lo việc này
+    // --- MỚI: API CHỌN SẢN PHẨM ĐỂ MUA ---
+    updateSelected: (itemIds, selected) => {
+        // itemIds: mảng id [1, 2], selected: true/false
         return axiosClient.put('/cart/items/select', null, {
             params: {
                 itemIds: itemIds.join(','),

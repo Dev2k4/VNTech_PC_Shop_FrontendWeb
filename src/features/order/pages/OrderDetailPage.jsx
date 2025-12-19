@@ -87,14 +87,14 @@ const OrderDetailPage = () => {
 
     useEffect(() => { fetchOrderDetail(); }, [id]);
 
-    const handleCancelOrder = async () => {
+  const handleCancelOrder = async (reason) => {
         try {
-            await OrderService.cancelOrder(id, "Người dùng hủy");
-            toast({ title: "Đã hủy đơn hàng", status: "success" });
-            fetchOrderDetail();
+            await OrderService.cancelOrder(id, reason); // Truyền reason vào Service
+            toast({ title: 'Đã hủy đơn hàng', status: 'success' });
             onClose();
+            fetchOrder(); // Load lại data
         } catch (error) {
-            toast({ title: "Lỗi hủy đơn", description: error.response?.data?.message, status: "error" });
+            toast({ title: 'Lỗi', description: 'Không thể hủy đơn hàng này', status: 'error' });
         }
     };
 
