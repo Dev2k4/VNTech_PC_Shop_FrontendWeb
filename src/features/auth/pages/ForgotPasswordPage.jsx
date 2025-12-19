@@ -16,8 +16,6 @@ const ForgotPasswordPage = () => {
     const [loading, setLoading] = useState(false);
     const toast = useToast();
     const navigate = useNavigate();
-
-    // UI Colors
     const bg = useColorModeValue("gray.50", "gray.900");
     const cardBg = useColorModeValue("white", "gray.800");
 

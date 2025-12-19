@@ -6,8 +6,6 @@ import { Link } from 'react-router-dom';
 
 const LoginForm = ({ onSubmit, isLoading, isTransparent }) => {
     const [formData, setFormData] = useState({ email: '', password: '' });
-
-    // Style colors
     const bg = isTransparent ? "transparent" : useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.800", "white");
     const inputBg = isTransparent ? useColorModeValue("gray.50", "whiteAlpha.200") : useColorModeValue("gray.50", "whiteAlpha.100");
@@ -38,8 +36,6 @@ const LoginForm = ({ onSubmit, isLoading, isTransparent }) => {
                         _focus={{ borderColor: "blue.500", boxShadow: "0 0 0 1px #3182ce" }}
                     />
                 </FormControl>
-
-                {/* --- MỚI: LINK QUÊN MẬT KHẨU --- */}
                 <Flex w="full" justify="flex-end">
                     <ChakraLink as={Link} to="/forgot-password" color="blue.400" fontSize="sm" fontWeight="medium">
                         Quên mật khẩu?

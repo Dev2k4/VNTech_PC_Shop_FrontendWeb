@@ -25,10 +25,8 @@ const CartService = {
     getCount: () => {
         return axiosClient.get('/cart/count');
     },
-    
-    // --- MỚI: API CHỌN SẢN PHẨM ĐỂ MUA ---
     updateSelected: (itemIds, selected) => {
-        // itemIds: mảng id [1, 2], selected: true/false
+
         return axiosClient.put('/cart/items/select', null, {
             params: {
                 itemIds: itemIds.join(','),

@@ -1,22 +1,20 @@
-// src/features/cart/pages/CheckoutPage.jsx
 import React, { useEffect, useState } from "react";
 import {
   Box, Container, Grid, VStack, Heading, Text, Flex, Radio, RadioGroup, Button, Divider,
   useToast, FormControl, FormLabel, Input, Modal, ModalOverlay, ModalContent, ModalHeader,
-  ModalBody, ModalCloseButton, useDisclosure, Stack, useColorModeValue, Icon
+  ModalBody, ModalCloseButton, useDisclosure, Stack, useColorModeValue, Icon, Badge
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
-import { FaMapMarkerAlt, FaCreditCard, FaClipboardList } from "react-icons/fa"; // Icons
+import { FaMapMarkerAlt, FaCreditCard, FaClipboardList, FaPlus } from "react-icons/fa";
 
 import CartService from "../../../services/cart.service";
 import AddressService from "../../../services/address.service";
 import OrderService from "../../../services/order.service";
+import PaymentService from "../../../services/payment.service"; // Import mới
 import { useCart } from "../../../context/CartContext";
 import { formatCurrency } from "../../../utils/format";
 
 const CheckoutPage = () => {
-  // ... (Giữ nguyên logic state, useEffect, handlers như cũ)
-  // Chỉ thay đổi phần RETURN UI bên dưới
   const navigate = useNavigate();
   const toast = useToast();
   const { fetchCartCount } = useCart();
@@ -24,244 +22,249 @@ const CheckoutPage = () => {
   const [cart, setCart] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [paymentMethod, setPaymentMethod] = useState("COD"); // Default COD
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Modal thêm địa chỉ
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [newAddress, setNewAddress] = useState({ recipientName: "", phoneNumber: "", addressDetail: "", province: "", district: "", ward: "", default: false });
+  const [newAddress, setNewAddress] = useState({
+      recipientName: "", phoneNumber: "", province: "", district: "", ward: "", addressDetail: ""
+  });
 
-  // Theme Colors
-  const pageBg = useColorModeValue("gray.50", "vntech.darkBg");
+  // Styles
+  const bg = useColorModeValue("gray.50", "vntech.darkBg");
   const cardBg = useColorModeValue("white", "vntech.cardBg");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
   const textColor = useColorModeValue("gray.800", "white");
-  const inputBg = useColorModeValue("gray.50", "gray.900");
+  const inputBg = useColorModeValue("white", "whiteAlpha.100");
 
+  // Fetch dữ liệu
   useEffect(() => {
-        const fetchData = async () => {
+      const initData = async () => {
           try {
-            const [cartRes, addrRes] = await Promise.all([
-              CartService.getCart(),
-              AddressService.getMyAddresses(),
-            ]);
-    
-            if (cartRes.success) {
-              setCart(cartRes.data);
-              if (cartRes.data.cartItems.length === 0) {
-                toast({ title: "Giỏ hàng trống", status: "warning" });
-                navigate("/cart");
+              // 1. Lấy giỏ hàng
+              const cartRes = await CartService.getCart();
+              if (cartRes.success) setCart(cartRes.data);
+
+              // 2. Lấy địa chỉ
+              const addrRes = await AddressService.getMyAddresses();
+              if (addrRes.success) {
+                  setAddresses(addrRes.data);
+                  // Tự động chọn địa chỉ mặc định hoặc địa chỉ đầu tiên
+                  const defaultAddr = addrRes.data.find(a => a.isDefault);
+                  if (defaultAddr) setSelectedAddressId(defaultAddr.id);
+                  else if (addrRes.data.length > 0) setSelectedAddressId(addrRes.data[0].id);
               }
-            }
-    
-            if (addrRes.success) {
-              setAddresses(addrRes.data);
-              const defaultAddr = addrRes.data.find((a) => a.isDefault);
-              if (defaultAddr) setSelectedAddressId(defaultAddr.id);
-              else if (addrRes.data.length > 0)
-                setSelectedAddressId(addrRes.data[0].id);
-            }
           } catch (error) {
-            console.error(error);
-            toast({ title: "Lỗi tải dữ liệu", status: "error" });
+              console.error(error);
           }
-        };
-        fetchData();
-      }, [navigate, toast]);
-
-    // ... (Giữ nguyên các hàm handleAddAddress, handlePlaceOrder)
-    const handleAddAddress = async () => {
-        try {
-          if (
-            !newAddress.recipientName ||
-            !newAddress.phoneNumber ||
-            !newAddress.addressDetail
-          ) {
-            toast({ title: "Vui lòng điền đủ thông tin", status: "warning" });
-            return;
-          }
-          const res = await AddressService.addAddress(newAddress);
-          if (res.success) {
-            toast({ title: "Thêm địa chỉ thành công", status: "success" });
-            const updatedList = await AddressService.getMyAddresses();
-            setAddresses(updatedList.data);
-            setSelectedAddressId(res.data.id);
-            onClose();
-          }
-        } catch (error) {
-          toast({ title: "Lỗi thêm địa chỉ", status: "error" });
-        }
       };
+      initData();
+  }, []);
 
-      const handlePlaceOrder = async () => {
-        if (!selectedAddressId) {
-          toast({ title: "Vui lòng chọn địa chỉ nhận hàng", status: "warning", position: "top" });
+  // Xử lý thêm địa chỉ
+  const handleAddAddress = async () => {
+      if (!newAddress.recipientName || !newAddress.phoneNumber || !newAddress.addressDetail) {
+          toast({ title: "Vui lòng điền đủ thông tin", status: "warning" });
           return;
-        }
-        setLoading(true);
-        try {
-          const orderData = {
-             addressId: selectedAddressId,
-             paymentMethod: paymentMethod,
-             note: note
-          };
-          const res = await OrderService.createOrder(orderData);
-
-          if (res.success) {
-            await fetchCartCount();
-            if (paymentMethod === "VNPAY" && res.data.paymentUrl) {
-              window.location.href = res.data.paymentUrl;
-            } else {
-              toast({ title: "Đặt hàng thành công!", status: "success", position: "top" });
-              navigate(`/user/orders/${res.data.id}`);
-            }
+      }
+      try {
+          await AddressService.addAddress(newAddress);
+          toast({ title: "Thêm địa chỉ thành công", status: "success" });
+          
+          // Reload list
+          const res = await AddressService.getMyAddresses();
+          if(res.success) {
+              setAddresses(res.data);
+              // Chọn luôn địa chỉ vừa thêm (thường là cái cuối cùng)
+              setSelectedAddressId(res.data[res.data.length-1].id);
           }
-        } catch (error) {
-          toast({ title: "Đặt hàng thất bại", description: error.response?.data?.message, status: "error" });
-        } finally {
-          setLoading(false);
-        }
-      };
+          onClose();
+      } catch (error) {
+          toast({ title: "Lỗi thêm địa chỉ", status: "error" });
+      }
+  };
 
-  if (!cart) return <Box p={10} bg={pageBg} minH="100vh">Loading...</Box>;
+  // --- LOGIC ĐẶT HÀNG (QUAN TRỌNG) ---
+  const handlePlaceOrder = async () => {
+      if (!selectedAddressId) {
+          toast({ title: "Chưa chọn địa chỉ nhận hàng", status: "warning", position: "top" });
+          return;
+      }
+      if (!cart || cart.selectedItems === 0) {
+        toast({ title: "Vui lòng chọn sản phẩm để mua", status: "warning", position: "top" });
+        return;
+      }
+
+      setLoading(true);
+      try {
+          // BƯỚC 1: TẠO ĐƠN HÀNG (Order)
+          const orderPayload = {
+              addressId: selectedAddressId,
+              paymentMethod: paymentMethod, // Gửi phương thức để BE lưu (COD/VNPAY)
+              note: note,
+              couponCode: "" // Tạm thời để trống
+          };
+
+          const orderRes = await OrderService.createOrder(orderPayload);
+          
+          if (orderRes.success) {
+              const createdOrder = orderRes.data;
+              console.log("Order Created:", createdOrder);
+
+              await fetchCartCount(); // Update lại số lượng giỏ hàng
+
+              // BƯỚC 2: XỬ LÝ THANH TOÁN
+              if (paymentMethod === "VNPAY") {
+                  // Nếu là VNPAY -> Gọi tiếp API lấy URL
+                  try {
+                    const paymentPayload = {
+                        orderId: createdOrder.id,
+                        amount: createdOrder.finalPrice, // BE yêu cầu amount
+                        paymentMethod: "VNPAY",
+                        language: "vn"
+                    };
+                    const payRes = await PaymentService.createPayment(paymentPayload);
+                    
+                    if (payRes.code === "00" || payRes.paymentUrl) {
+                        // Redirect sang VNPay
+                        window.location.href = payRes.paymentUrl;
+                    } else {
+                        // Trường hợp tạo order xong nhưng lỗi lấy link thanh toán
+                        toast({ title: "Lỗi lấy link thanh toán", description: "Vui lòng thử lại trong Lịch sử đơn hàng", status: "error" });
+                        navigate(`/user/orders/${createdOrder.id}`);
+                    }
+                  } catch (payErr) {
+                      console.error("Lỗi API Payment:", payErr);
+                      toast({ title: "Lỗi kết nối cổng thanh toán", status: "error" });
+                      navigate(`/user/orders/${createdOrder.id}`);
+                  }
+
+              } else {
+                  // Nếu là COD -> Xong luôn
+                  toast({ title: "Đặt hàng thành công!", status: "success", duration: 3000 });
+                  navigate("/user/orders"); // Chuyển về trang lịch sử
+              }
+          }
+
+      } catch (error) {
+          console.error("Lỗi đặt hàng:", error);
+          toast({ 
+              title: "Đặt hàng thất bại", 
+              description: error.response?.data?.message || "Có lỗi xảy ra", 
+              status: "error" 
+          });
+      } finally {
+          setLoading(false);
+      }
+  };
 
   return (
-    <Box bg={pageBg} minH="100vh" py={10} color={textColor}>
+    <Box bg={bg} minH="100vh" py={10}>
       <Container maxW="container.xl">
-        <Heading mb={8} bgGradient="linear(to-r, blue.400, purple.500)" bgClip="text" size="xl">
-            Xác nhận thanh toán
-        </Heading>
+        <Heading mb={8} size="lg" color={textColor}>Thanh toán</Heading>
         
         <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap={8}>
+          {/* LEFT COLUMN */}
           <VStack align="stretch" spacing={6}>
             
-            {/* Section: Địa chỉ */}
-            <Box bg={cardBg} p={6} borderRadius="2xl" border="1px solid" borderColor={borderColor} shadow="lg">
-              <Flex justify="space-between" align="center" mb={4}>
-                <Flex align="center" gap={3}>
-                    <Icon as={FaMapMarkerAlt} color="blue.500" />
-                    <Heading size="md">Địa chỉ nhận hàng</Heading>
+            {/* 1. ĐỊA CHỈ */}
+            <Box bg={cardBg} p={6} borderRadius="xl" border="1px solid" borderColor={borderColor}>
+                <Flex justify="space-between" align="center" mb={4}>
+                    <Flex align="center" gap={2}>
+                        <Icon as={FaMapMarkerAlt} color="blue.500" />
+                        <Heading size="md" color={textColor}>Địa chỉ nhận hàng</Heading>
+                    </Flex>
+                    <Button size="sm" leftIcon={<FaPlus />} onClick={onOpen}>Thêm mới</Button>
                 </Flex>
-                <Button size="sm" variant="outline" colorScheme="blue" onClick={onOpen}>+ Thêm mới</Button>
-              </Flex>
 
-              <RadioGroup onChange={(val) => setSelectedAddressId(parseInt(val))} value={selectedAddressId}>
-                <Stack spacing={4}>
-                  {addresses.map((addr) => (
-                    <Box
-                      key={addr.id}
-                      p={4}
-                      borderRadius="xl"
-                      border="1px solid"
-                      borderColor={selectedAddressId === addr.id ? "blue.500" : "whiteAlpha.200"}
-                      bg={selectedAddressId === addr.id ? "blue.500" : "transparent"} // Highlight active item
-                      bgOpacity={selectedAddressId === addr.id ? 0.1 : 0}
-                      transition="all 0.2s"
-                      _hover={{ borderColor: "blue.400" }}
-                    >
-                      <Radio value={addr.id} colorScheme="blue">
-                        <Box ml={2}>
-                          <Text fontWeight="bold" color={selectedAddressId === addr.id ? "white" : textColor}>
-                            {addr.recipientName} <Text as="span" fontWeight="normal">| {addr.phoneNumber}</Text>
-                          </Text>
-                          <Text fontSize="sm" color={selectedAddressId === addr.id ? "gray.200" : "gray.500"}>
-                            {addr.addressDetail}, {addr.ward}, {addr.district}, {addr.province}
-                          </Text>
+                {addresses.length === 0 ? (
+                    <Text color="red.400">Bạn chưa có địa chỉ nào. Vui lòng thêm mới.</Text>
+                ) : (
+                    <RadioGroup onChange={(val) => setSelectedAddressId(parseInt(val))} value={selectedAddressId}>
+                        <Stack>
+                            {addresses.map(addr => (
+                                <Box key={addr.id} p={3} border="1px solid" borderColor={selectedAddressId === addr.id ? "blue.500" : borderColor} borderRadius="md" position="relative">
+                                    <Radio value={addr.id}>
+                                        <Text fontWeight="bold">{addr.recipientName} | {addr.phoneNumber}</Text>
+                                        <Text fontSize="sm" color="gray.500">{addr.addressDetail}, {addr.ward}, {addr.district}, {addr.province}</Text>
+                                    </Radio>
+                                    {addr.isDefault && <Badge colorScheme="green" position="absolute" right={2} top={2}>Mặc định</Badge>}
+                                </Box>
+                            ))}
+                        </Stack>
+                    </RadioGroup>
+                )}
+            </Box>
+
+            {/* 2. SẢN PHẨM (Chỉ hiển thị tóm tắt các item ĐƯỢC CHỌN) */}
+            <Box bg={cardBg} p={6} borderRadius="xl" border="1px solid" borderColor={borderColor}>
+                <Heading size="md" mb={4} color={textColor} display="flex" alignItems="center" gap={2}>
+                    <Icon as={FaClipboardList} color="blue.500" /> Sản phẩm ({cart?.selectedItems || 0})
+                </Heading>
+                {/* Ở đây bạn có thể map lại cart.cartItems.filter(i => i.selected) để hiển thị chi tiết nếu muốn */}
+            </Box>
+
+            {/* 3. PHƯƠNG THỨC THANH TOÁN */}
+            <Box bg={cardBg} p={6} borderRadius="xl" border="1px solid" borderColor={borderColor}>
+                 <Heading size="md" mb={4} color={textColor} display="flex" alignItems="center" gap={2}>
+                    <Icon as={FaCreditCard} color="blue.500" /> Phương thức thanh toán
+                </Heading>
+                <RadioGroup onChange={setPaymentMethod} value={paymentMethod}>
+                    <Stack spacing={4}>
+                        <Box p={4} border="1px solid" borderColor={paymentMethod === "COD" ? "blue.500" : borderColor} borderRadius="lg" cursor="pointer" onClick={() => setPaymentMethod("COD")}>
+                            <Radio value="COD">Thanh toán khi nhận hàng (COD)</Radio>
                         </Box>
-                      </Radio>
-                    </Box>
-                  ))}
-                </Stack>
-              </RadioGroup>
+                        <Box p={4} border="1px solid" borderColor={paymentMethod === "VNPAY" ? "blue.500" : borderColor} borderRadius="lg" cursor="pointer" onClick={() => setPaymentMethod("VNPAY")}>
+                            <Radio value="VNPAY">Thanh toán qua VNPAY (Thẻ ATM/Internet Banking)</Radio>
+                            {paymentMethod === "VNPAY" && <Text fontSize="xs" color="gray.500" ml={6} mt={1}>Bạn sẽ được chuyển hướng sang cổng thanh toán VNPAY.</Text>}
+                        </Box>
+                    </Stack>
+                </RadioGroup>
             </Box>
 
-            {/* Section: Thanh toán */}
-            <Box bg={cardBg} p={6} borderRadius="2xl" border="1px solid" borderColor={borderColor} shadow="lg">
-              <Flex align="center" gap={3} mb={4}>
-                 <Icon as={FaCreditCard} color="purple.500" />
-                 <Heading size="md">Phương thức thanh toán</Heading>
-              </Flex>
-              <RadioGroup onChange={setPaymentMethod} value={paymentMethod}>
-                <Stack direction={{ base: "column", md: "row" }} spacing={4}>
-                  <Box 
-                    as="label" 
-                    p={4} border="1px solid" borderColor={paymentMethod === "COD" ? "blue.500" : borderColor} 
-                    borderRadius="xl" cursor="pointer" flex="1"
-                    _hover={{ bg: "whiteAlpha.50" }}
-                  >
-                    <Radio value="COD">Thanh toán khi nhận hàng (COD)</Radio>
-                  </Box>
-                  <Box 
-                    as="label" 
-                    p={4} border="1px solid" borderColor={paymentMethod === "VNPAY" ? "blue.500" : borderColor} 
-                    borderRadius="xl" cursor="pointer" flex="1"
-                    _hover={{ bg: "whiteAlpha.50" }}
-                  >
-                    <Radio value="VNPAY">Thanh toán qua VNPAY</Radio>
-                  </Box>
-                </Stack>
-              </RadioGroup>
-            </Box>
-
-            {/* Section: Note */}
-            <Box bg={cardBg} p={6} borderRadius="2xl" border="1px solid" borderColor={borderColor} shadow="lg">
-               <Flex align="center" gap={3} mb={4}>
-                 <Icon as={FaClipboardList} color="orange.500" />
-                 <Heading size="md">Ghi chú</Heading>
-              </Flex>
-              <Input 
-                placeholder="Lời nhắn cho cửa hàng..." 
-                value={note} 
-                onChange={(e) => setNote(e.target.value)} 
-                bg={inputBg} border="none" py={6}
-              />
+            {/* 4. GHI CHÚ */}
+            <Box bg={cardBg} p={6} borderRadius="xl" border="1px solid" borderColor={borderColor}>
+                 <Heading size="md" mb={4} color={textColor}>Ghi chú đơn hàng</Heading>
+                 <Input placeholder="Lưu ý cho người bán..." value={note} onChange={(e) => setNote(e.target.value)} bg={inputBg} />
             </Box>
           </VStack>
 
-          {/* Sticky Summary */}
+          {/* RIGHT COLUMN: SUMMARY */}
           <Box>
-            <Box position="sticky" top="100px" bg={cardBg} p={6} borderRadius="2xl" border="1px solid" borderColor={borderColor} shadow="xl">
-              <Heading size="md" mb={6}>Đơn hàng của bạn</Heading>
-              <VStack align="stretch" spacing={4} maxH="300px" overflowY="auto" mb={4}>
-                {cart.cartItems.map((item) => (
-                  <Flex key={item.id} justify="space-between">
-                    <Box>
-                        <Text fontWeight="semibold" fontSize="sm" noOfLines={1}>{item.product.productName}</Text>
-                        <Text fontSize="xs" color="gray.500">x {item.quantity}</Text>
-                    </Box>
-                    <Text fontSize="sm" fontWeight="bold">{formatCurrency(item.price * item.quantity)}</Text>
+              <Box bg={cardBg} p={6} borderRadius="xl" border="1px solid" borderColor={borderColor} position="sticky" top="20px">
+                  <Heading size="md" mb={6} color={textColor}>Tóm tắt đơn hàng</Heading>
+                  <Flex justify="space-between" mb={2}>
+                      <Text color="gray.500">Tiền hàng</Text>
+                      <Text fontWeight="bold">{formatCurrency(cart?.selectedItemsPrice || 0)}</Text>
                   </Flex>
-                ))}
-              </VStack>
-              <Divider borderColor="whiteAlpha.300" mb={4} />
-              <Flex justify="space-between" mb={2}>
-                <Text color="gray.500">Tạm tính</Text>
-                <Text fontWeight="bold">{formatCurrency(cart.totalPrice)}</Text>
-              </Flex>
-              <Flex justify="space-between" mb={6}>
-                <Text color="gray.500">Vận chuyển</Text>
-                <Text color="green.400" fontWeight="bold">Miễn phí</Text>
-              </Flex>
-              <Flex justify="space-between" mb={6} align="center">
-                <Heading size="md">Tổng cộng</Heading>
-                <Heading size="lg" color="blue.400">{formatCurrency(cart.totalPrice)}</Heading>
-              </Flex>
-              
-              <Button 
-                w="full" size="lg" variant="brand" 
-                onClick={handlePlaceOrder} isLoading={loading}
-                boxShadow="lg"
-              >
-                ĐẶT HÀNG NGAY
-              </Button>
-            </Box>
+                  <Flex justify="space-between" mb={2}>
+                      <Text color="gray.500">Phí vận chuyển</Text>
+                      <Text fontWeight="bold">0 ₫</Text>
+                  </Flex>
+                  <Divider my={4} />
+                  <Flex justify="space-between" mb={6}>
+                      <Text fontSize="lg" fontWeight="bold" color={textColor}>Tổng thanh toán</Text>
+                      <Text fontSize="xl" fontWeight="bold" color="blue.500">{formatCurrency(cart?.selectedItemsPrice || 0)}</Text>
+                  </Flex>
+                  
+                  <Button 
+                    w="full" size="lg" colorScheme="blue" 
+                    onClick={handlePlaceOrder}
+                    isLoading={loading}
+                    loadingText="Đang xử lý..."
+                  >
+                      ĐẶT HÀNG
+                  </Button>
+              </Box>
           </Box>
         </Grid>
 
-        {/* Modal Thêm địa chỉ (Giữ nguyên logic form, chỉ update style nếu cần) */}
-        <Modal isOpen={isOpen} onClose={onClose} size="lg">
-          <ModalOverlay backdropFilter="blur(5px)" />
-          <ModalContent bg={cardBg} border="1px solid" borderColor={borderColor}>
+        {/* Modal Thêm Địa Chỉ */}
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent bg={bg} color={textColor}>
             <ModalHeader>Thêm địa chỉ mới</ModalHeader>
             <ModalCloseButton />
             <ModalBody pb={6}>

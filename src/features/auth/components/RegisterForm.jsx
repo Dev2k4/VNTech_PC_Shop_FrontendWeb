@@ -7,8 +7,6 @@ import { Link } from 'react-router-dom';
 const RegisterForm = ({ onSubmit, isLoading, isTransparent }) => {
     const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '' });
     const toast = useToast();
-
-    // Style xử lý trong suốt nếu cần
     const bg = isTransparent ? "transparent" : useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.800", "white");
     const inputBg = useColorModeValue("gray.50", "whiteAlpha.100");

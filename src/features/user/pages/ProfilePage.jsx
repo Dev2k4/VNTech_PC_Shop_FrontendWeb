@@ -1,4 +1,3 @@
-// src/features/user/pages/ProfilePage.jsx
 import React, { useEffect, useState } from 'react';
 import {
     Box, Container, Grid, VStack, useToast, Tabs, TabList, TabPanels, Tab, TabPanel,
@@ -14,11 +13,11 @@ const ProfilePage = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Theme Colors
-    const pageBg = useColorModeValue("gray.50", "vntech.darkBg");
-    const cardBg = useColorModeValue("white", "vntech.cardBg");
-    const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
-    const textColor = useColorModeValue("gray.800", "white");
+    // Theme Colors (Fix: Đảm bảo màu sắc tương phản rõ ràng)
+    const pageBg = useColorModeValue("gray.50", "gray.900"); // Nền trang tối hẳn
+    const cardBg = useColorModeValue("white", "gray.800"); // Nền card xám đậm
+    const borderColor = useColorModeValue("gray.200", "whiteAlpha.200");
+    const textColor = useColorModeValue("gray.800", "white"); // Chữ đen/trắng tùy mode
 
     const fetchProfile = async () => {
         try {
@@ -78,6 +77,7 @@ const ProfilePage = () => {
                         bg={cardBg} p={8} borderRadius="2xl" 
                         border="1px solid" borderColor={borderColor} 
                         spacing={4} align="center"
+                        boxShadow="lg"
                     >
                         <Box position="relative">
                             <Avatar size="2xl" name={user?.fullName} src={user?.avatar} border="4px solid" borderColor="blue.500" />
@@ -90,25 +90,26 @@ const ProfilePage = () => {
                                 <input type="file" id="avatar-upload" hidden accept="image/*" onChange={handleAvatarChange} />
                             </Box>
                         </Box>
-                        <Heading size="md">{user?.fullName || user?.username}</Heading>
+                        <Heading size="md" color={textColor}>{user?.fullName || user?.username}</Heading>
                         <Text color="gray.500">{user?.email}</Text>
                         <Button w="full" variant="outline" colorScheme="blue" size="sm">Thành viên {user?.roleName}</Button>
                     </VStack>
 
                     {/* RIGHT: Forms */}
-                    <Box bg={cardBg} p={8} borderRadius="2xl" border="1px solid" borderColor={borderColor}>
+                    <Box bg={cardBg} p={8} borderRadius="2xl" border="1px solid" borderColor={borderColor} boxShadow="lg">
                         <Tabs variant="soft-rounded" colorScheme="blue">
                             <TabList mb={6}>
-                                <Tab><Icon as={FaUser} mr={2}/> Thông tin chung</Tab>
-                                <Tab><Icon as={FaKey} mr={2}/> Bảo mật</Tab>
+                                {/* Fix màu text cho Tab khi chưa active */}
+                                <Tab _selected={{ color: "white", bg: "blue.500" }} color={textColor}><Icon as={FaUser} mr={2}/> Thông tin chung</Tab>
+                                <Tab _selected={{ color: "white", bg: "blue.500" }} color={textColor}><Icon as={FaKey} mr={2}/> Bảo mật</Tab>
                             </TabList>
                             <TabPanels>
                                 <TabPanel>
-                                    <Heading size="md" mb={6}>Thông tin cá nhân</Heading>
+                                    <Heading size="md" mb={6} color={textColor}>Thông tin cá nhân</Heading>
                                     <GeneralInfoForm initialData={user} onSubmit={handleUpdateInfo} />
                                 </TabPanel>
                                 <TabPanel>
-                                    <Heading size="md" mb={6}>Đổi mật khẩu</Heading>
+                                    <Heading size="md" mb={6} color={textColor}>Đổi mật khẩu</Heading>
                                     <ChangePasswordForm onSubmit={handleChangePassword} />
                                 </TabPanel>
                             </TabPanels>
