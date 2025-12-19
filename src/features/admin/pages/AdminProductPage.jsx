@@ -1,79 +1,57 @@
-// src/features/admin/pages/AdminProductPage.jsx
 import React, { useEffect, useState } from "react";
 import {
-  Box,
-  Button,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  IconButton,
-  useDisclosure,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  FormControl,
-  FormLabel,
-  Input,
-  useToast,
-  Heading,
-  Flex,
-  useColorModeValue,
-  Select,
-  Textarea,
-  Image,
-  HStack,
-  ModalCloseButton,
-  Text,
+  Box, Button, Table, Thead, Tbody, Tr, Th, Td, IconButton, useDisclosure,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter,
+  FormControl, FormLabel, Input, useToast, Heading, Flex, useColorModeValue,
+  Select, Textarea, Image, HStack, ModalCloseButton, Text, Tabs, TabList, TabPanels, Tab, TabPanel, VStack, SimpleGrid, Icon, Badge
 } from "@chakra-ui/react";
-import { EditIcon, DeleteIcon, AddIcon } from "@chakra-ui/icons";
+import { EditIcon, DeleteIcon, AddIcon, StarIcon, CloseIcon } from "@chakra-ui/icons";
+import { FaCloudUploadAlt, FaTrash } from "react-icons/fa";
+
 import ProductService from "../../../services/product.service";
-import AdminTableSkeleton from "../../../components/common/AdminTableSkeleton";
 import AdminService from "../../../services/admin.service";
 import { formatCurrency } from "../../../utils/format";
 
 const AdminProductPage = () => {
-  // ... (Giữ nguyên logic State, useEffect, handlers như cũ) ...
-  // Chỉ thay đổi phần RETURN UI bên dưới
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // State quản lý Form
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [currentProduct, setCurrentProduct] = useState(null);
-  const toast = useToast();
+  
+  // 1. Basic Info State
   const [formData, setFormData] = useState({
-    productName: "",
-    description: "",
-    originalPrice: "",
-    salePrice: "",
-    stock: "",
-    brand: "",
-    model: "",
-    origin: "",
-    categoryId: "",
+    productName: "", description: "", originalPrice: "", salePrice: "",
+    stock: "", brand: "", model: "", origin: "", categoryId: ""
   });
 
-  // Theme Colors
-  const bg = useColorModeValue("white", "#111");
-  const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
-  const headerBg = useColorModeValue("gray.50", "#1a1a1a");
-  const textColor = useColorModeValue("gray.800", "white");
-  const inputBg = useColorModeValue("white", "#222");
+  // 2. Specs State (Mảng động)
+  const [specs, setSpecs] = useState([{ keyName: "", value: "" }]);
 
-  // ... (Giữ nguyên functions: fetchData, handleOpenModal, handleChange, handleSubmit, handleDelete) ...
+  // 3. Images State (File upload)
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previewImages, setPreviewImages] = useState([]); // Ảnh preview khi chọn file
+  const [existingImages, setExistingImages] = useState([]); // Ảnh cũ từ server
+
+  const toast = useToast();
+
+  // Theme Colors
+  const bg = useColorModeValue('white', '#111');
+  const borderColor = useColorModeValue('gray.200', 'whiteAlpha.100');
+  const textColor = useColorModeValue('gray.800', 'white');
+  const inputBg = useColorModeValue('white', '#222');
+
+  // --- FETCH DATA ---
   const fetchData = async () => {
     setLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([
-        ProductService.getAll({ size: 100 }),
-        ProductService.getCategories(),
+        ProductService.getAll({ size: 100 }), // Lấy tạm 100 sp
+        ProductService.getCategories()
       ]);
-      if (prodRes.success) setProducts(prodRes.data.content || []);
+      if (prodRes.success) setProducts(prodRes.data.content);
       if (catRes.success) setCategories(catRes.data);
     } catch (error) {
       toast({ title: "Lỗi tải dữ liệu", status: "error" });
@@ -82,78 +60,113 @@ const AdminProductPage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const handleOpenModal = (product = null) => {
-    if (product) {
-      setCurrentProduct(product);
-      setFormData({
-        productName: product.productName,
-        description: product.description || "",
-        originalPrice: product.originalPrice,
-        salePrice: product.salePrice,
-        stock: product.stock,
-        brand: product.brand || "",
-        model: product.model || "",
-        origin: product.origin || "",
-        categoryId: product.category?.id || "",
-      });
-    } else {
-      setCurrentProduct(null);
-      setFormData({
-        productName: "",
-        description: "",
-        originalPrice: "",
-        salePrice: "",
-        stock: "",
-        brand: "",
-        model: "",
-        origin: "",
-        categoryId: "",
-      });
-    }
+  // --- HANDLERS ---
+  const handleOpenCreate = () => {
+    setCurrentProduct(null);
+    setFormData({
+      productName: "", description: "", originalPrice: "", salePrice: "",
+      stock: "", brand: "", model: "", origin: "", categoryId: ""
+    });
+    setSpecs([{ keyName: "", value: "" }]);
+    setSelectedFiles([]);
+    setPreviewImages([]);
+    setExistingImages([]);
     onOpen();
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleOpenEdit = async (product) => {
+    setCurrentProduct(product);
+    // Fetch chi tiết để lấy specs và images đầy đủ
+    try {
+        const res = await ProductService.getById(product.id);
+        if(res.success) {
+            const data = res.data;
+            setFormData({
+                productName: data.productName,
+                description: data.description,
+                originalPrice: data.originalPrice,
+                salePrice: data.salePrice,
+                stock: data.stock,
+                brand: data.brand,
+                model: data.model,
+                origin: data.origin,
+                categoryId: data.category?.id || ""
+            });
+            setSpecs(data.specifications.length > 0 ? data.specifications : [{ keyName: "", value: "" }]);
+            setExistingImages(data.images || []);
+            setSelectedFiles([]);
+            setPreviewImages([]);
+            onOpen();
+        }
+    } catch (e) {
+        toast({ title: "Lỗi tải chi tiết", status: "error" });
+    }
   };
 
+  // Logic thêm/xóa dòng thông số
+  const handleAddSpec = () => setSpecs([...specs, { keyName: "", value: "" }]);
+  const handleRemoveSpec = (index) => {
+    const newSpecs = [...specs];
+    newSpecs.splice(index, 1);
+    setSpecs(newSpecs);
+  };
+  const handleSpecChange = (index, field, val) => {
+    const newSpecs = [...specs];
+    newSpecs[index][field] = val;
+    setSpecs(newSpecs);
+  };
+
+  // Logic chọn ảnh upload
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    setSelectedFiles(files);
+    
+    // Tạo preview
+    const previews = files.map(file => URL.createObjectURL(file));
+    setPreviewImages(previews);
+  };
+
+  // SUBMIT FORM
   const handleSubmit = async () => {
-    try {
-      if (
-        !formData.productName ||
-        !formData.salePrice ||
-        !formData.categoryId
-      ) {
-        toast({ title: "Thiếu thông tin bắt buộc", status: "warning" });
+    // 1. Validate sơ bộ
+    if (!formData.productName || !formData.salePrice || !formData.categoryId) {
+        toast({ title: "Vui lòng nhập đủ thông tin cơ bản", status: "warning" });
         return;
-      }
-      const payload = {
+    }
+
+    const payload = {
         ...formData,
-        originalPrice: parseInt(formData.originalPrice),
-        salePrice: parseInt(formData.salePrice),
-        stock: parseInt(formData.stock),
-        categoryId: parseInt(formData.categoryId),
-      };
-      if (currentProduct) {
-        await AdminService.updateProduct(currentProduct.id, payload);
-        toast({ title: "Đã cập nhật", status: "success" });
-      } else {
-        await AdminService.createProduct(payload);
-        toast({ title: "Đã tạo mới", status: "success" });
-      }
-      fetchData();
-      onClose();
+        specifications: specs.filter(s => s.keyName && s.value) // Lọc bỏ dòng trống
+    };
+
+    try {
+        let productId;
+        if (currentProduct) {
+            // EDIT
+            await AdminService.updateProduct(currentProduct.id, payload);
+            productId = currentProduct.id;
+            toast({ title: "Cập nhật thông tin thành công", status: "success" });
+        } else {
+            // CREATE
+            const res = await AdminService.createProduct(payload);
+            if (res.success) {
+                productId = res.data.id;
+                toast({ title: "Tạo sản phẩm thành công", status: "success" });
+            }
+        }
+
+        // 2. Upload ảnh (nếu có file mới)
+        if (productId && selectedFiles.length > 0) {
+            await AdminService.uploadMultipleImages(productId, selectedFiles);
+            toast({ title: "Đã upload ảnh", status: "success" });
+        }
+
+        fetchData();
+        onClose();
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: error.response?.data?.message,
-        status: "error",
-      });
+        toast({ title: "Lỗi xử lý", description: error.response?.data?.message || "Có lỗi xảy ra", status: "error" });
     }
   };
 
@@ -168,274 +181,202 @@ const AdminProductPage = () => {
     }
   };
 
+  const handleSetMainImage = async (imgId) => {
+      try {
+          await AdminService.setMainImage(currentProduct.id, imgId);
+          toast({ title: "Đã đặt làm ảnh chính", status: "success" });
+          // Reload ảnh
+          const res = await ProductService.getById(currentProduct.id);
+          if(res.success) setExistingImages(res.data.images);
+      } catch (e) {
+          toast({ title: "Lỗi", status: "error" });
+      }
+  };
+
+  const handleDeleteImage = async (imgId) => {
+      if(!window.confirm("Xóa ảnh này?")) return;
+      try {
+        await AdminService.deleteImage(currentProduct.id, imgId);
+        setExistingImages(existingImages.filter(img => img.id !== imgId));
+      } catch (e) {
+          toast({ title: "Lỗi xóa ảnh", status: "error" });
+      }
+  };
+
   return (
-    <Box
-      bg={bg}
-      p={6}
-      borderRadius="2xl"
-      border="1px solid"
-      borderColor={borderColor}
-    >
+    <Box>
       <Flex justify="space-between" align="center" mb={6}>
-        <Heading size="md" color={textColor}>
-          Quản lý Sản phẩm
-        </Heading>
-        <Button
-          leftIcon={<AddIcon />}
-          colorScheme="blue"
-          size="sm"
-          onClick={() => handleOpenModal()}
-        >
-          Thêm mới
-        </Button>
+        <Heading size="lg" color={textColor}>Quản lý Sản phẩm</Heading>
+        <Button leftIcon={<AddIcon />} colorScheme="blue" onClick={handleOpenCreate}>Thêm mới</Button>
       </Flex>
 
-      <Box overflowX="auto">
+      <Box overflowX="auto" bg={bg} borderRadius="xl" border="1px solid" borderColor={borderColor}>
         <Table variant="simple">
-          <Thead bg={headerBg}>
+          <Thead bg={useColorModeValue('gray.50', 'whiteAlpha.50')}>
             <Tr>
-              <Th color="gray.400">ID</Th>
-              <Th color="gray.400">Ảnh</Th>
-              <Th color="gray.400">Tên sản phẩm</Th>
-              <Th color="gray.400" isNumeric>
-                Giá bán
-              </Th>
-              <Th color="gray.400" isNumeric>
-                Kho
-              </Th>
-              <Th color="gray.400">Danh mục</Th>
-              <Th color="gray.400">Thao tác</Th>
+              <Th>Ảnh</Th>
+              <Th>Tên sản phẩm</Th>
+              <Th>Giá bán</Th>
+              <Th>Kho</Th>
+              <Th>Danh mục</Th>
+              <Th>Hành động</Th>
             </Tr>
           </Thead>
           <Tbody>
-            {loading ? (
-              // 7 cột tương ứng với header
-              <AdminTableSkeleton rowCount={8} columnCount={7} />
-            ) : (
-              products.map((p) => (
-                <Tr key={p.id} _hover={{ bg: "whiteAlpha.50" }}>
-                  <Td borderBottomColor={borderColor}>{p.id}</Td>
-                  <Td borderBottomColor={borderColor}>
-                    <Image
-                      src={
-                        p.images?.[0]?.imageUrl ||
-                        "https://via.placeholder.com/50"
-                      }
-                      boxSize="40px"
-                      objectFit="cover"
-                      borderRadius="md"
+            {products.map((product) => (
+              <Tr key={product.id}>
+                <Td>
+                    <Image 
+                        src={product.images?.[0]?.imageUrl || "https://via.placeholder.com/50"} 
+                        boxSize="50px" objectFit="contain" borderRadius="md" bg="white"
                     />
-                  </Td>
-                  <Td
-                    borderBottomColor={borderColor}
-                    maxW="250px"
-                    isTruncated
-                    fontWeight="medium"
-                    color={textColor}
-                  >
-                    {p.productName}
-                  </Td>
-                  <Td
-                    borderBottomColor={borderColor}
-                    isNumeric
-                    color="blue.400"
-                    fontWeight="bold"
-                  >
-                    {formatCurrency(p.salePrice)}
-                  </Td>
-                  <Td borderBottomColor={borderColor} isNumeric>
-                    {p.stock}
-                  </Td>
-                  <Td borderBottomColor={borderColor}>
-                    <Text
-                      fontSize="sm"
-                      bg="whiteAlpha.100"
-                      px={2}
-                      py={1}
-                      borderRadius="md"
-                      textAlign="center"
-                    >
-                      {p.category?.categoryName}
-                    </Text>
-                  </Td>
-                  <Td borderBottomColor={borderColor}>
-                    <HStack spacing={2}>
-                      <IconButton
-                        icon={<EditIcon />}
-                        size="sm"
-                        variant="ghost"
-                        color="blue.400"
-                        onClick={() => handleOpenModal(p)}
-                      />
-                      <IconButton
-                        icon={<DeleteIcon />}
-                        size="sm"
-                        variant="ghost"
-                        color="red.400"
-                        onClick={() => handleDelete(p.id)}
-                      />
-                    </HStack>
-                  </Td>
-                </Tr>
-              ))
-            )}
+                </Td>
+                <Td fontWeight="bold" maxW="200px" isTruncated>{product.productName}</Td>
+                <Td color="blue.500" fontWeight="bold">{formatCurrency(product.salePrice)}</Td>
+                <Td>{product.stock}</Td>
+                <Td><Badge>{product.category?.categoryName}</Badge></Td>
+                <Td>
+                  <HStack>
+                    <IconButton icon={<EditIcon />} size="sm" onClick={() => handleOpenEdit(product)} />
+                    <IconButton icon={<DeleteIcon />} colorScheme="red" size="sm" onClick={() => handleDelete(product.id)} />
+                  </HStack>
+                </Td>
+              </Tr>
+            ))}
           </Tbody>
         </Table>
-        {/* <Table variant="simple">
-                    <Thead bg={headerBg}>
-                        <Tr>
-                            <Th color="gray.400">ID</Th>
-                            <Th color="gray.400">Ảnh</Th>
-                            <Th color="gray.400">Tên sản phẩm</Th>
-                            <Th color="gray.400" isNumeric>Giá bán</Th>
-                            <Th color="gray.400" isNumeric>Kho</Th>
-                            <Th color="gray.400">Danh mục</Th>
-                            <Th color="gray.400">Thao tác</Th>
-                        </Tr>
-                    </Thead>
-                    <Tbody>
-                        {products.map((p) => (
-                            <Tr key={p.id} _hover={{ bg: "whiteAlpha.50" }}>
-                                <Td borderBottomColor={borderColor}>{p.id}</Td>
-                                <Td borderBottomColor={borderColor}>
-                                    <Image 
-                                        src={p.images?.[0]?.imageUrl || 'https://via.placeholder.com/50'} 
-                                        boxSize="40px" objectFit="cover" borderRadius="md"
-                                    />
-                                </Td>
-                                <Td borderBottomColor={borderColor} maxW="250px" isTruncated fontWeight="medium" color={textColor}>
-                                    {p.productName}
-                                </Td>
-                                <Td borderBottomColor={borderColor} isNumeric color="blue.400" fontWeight="bold">{formatCurrency(p.salePrice)}</Td>
-                                <Td borderBottomColor={borderColor} isNumeric>{p.stock}</Td>
-                                <Td borderBottomColor={borderColor}><Text fontSize="sm" bg="whiteAlpha.100" px={2} py={1} borderRadius="md" textAlign="center">{p.category?.categoryName}</Text></Td>
-                                <Td borderBottomColor={borderColor}>
-                                    <HStack spacing={2}>
-                                        <IconButton icon={<EditIcon />} size="sm" variant="ghost" color="blue.400" onClick={() => handleOpenModal(p)} />
-                                        <IconButton icon={<DeleteIcon />} size="sm" variant="ghost" color="red.400" onClick={() => handleDelete(p.id)} />
-                                    </HStack>
-                                </Td>
-                            </Tr>
-                        ))}
-                    </Tbody>
-                </Table> */}
       </Box>
 
-      {/* Modal - Dark Mode Compatible */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+      {/* MODAL FORM SUPER VIP */}
+      <Modal isOpen={isOpen} onClose={onClose} size="4xl" scrollBehavior="inside">
         <ModalOverlay backdropFilter="blur(5px)" />
-        <ModalContent
-          bg={bg}
-          color={textColor}
-          border="1px solid"
-          borderColor={borderColor}
-        >
-          <ModalHeader borderBottom="1px solid" borderColor={borderColor}>
-            {currentProduct ? "Sửa sản phẩm" : "Thêm sản phẩm mới"}
-          </ModalHeader>
+        <ModalContent bg={bg} color={textColor}>
+          <ModalHeader>{currentProduct ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}</ModalHeader>
           <ModalCloseButton />
-          <ModalBody pb={6}>
-            <Flex direction="column" gap={4}>
-              <FormControl isRequired>
-                <FormLabel>Tên sản phẩm</FormLabel>
-                <Input
-                  name="productName"
-                  value={formData.productName}
-                  onChange={handleChange}
-                  bg={inputBg}
-                  borderColor={borderColor}
-                />
-              </FormControl>
+          <ModalBody>
+            <Tabs variant="enclosed" colorScheme="blue">
+                <TabList mb={4}>
+                    <Tab>Thông tin chung</Tab>
+                    <Tab>Thông số kỹ thuật</Tab>
+                    <Tab>Hình ảnh</Tab>
+                </TabList>
 
-              <Flex gap={4}>
-                <FormControl isRequired>
-                  <FormLabel>Danh mục</FormLabel>
-                  <Select
-                    name="categoryId"
-                    value={formData.categoryId}
-                    onChange={handleChange}
-                    placeholder="Chọn danh mục"
-                    bg={inputBg}
-                    borderColor={borderColor}
-                  >
-                    {categories.map((c) => (
-                      <option
-                        key={c.id}
-                        value={c.id}
-                        style={{ color: "black" }}
-                      >
-                        {c.categoryName}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Thương hiệu</FormLabel>
-                  <Input
-                    name="brand"
-                    value={formData.brand}
-                    onChange={handleChange}
-                    bg={inputBg}
-                    borderColor={borderColor}
-                  />
-                </FormControl>
-              </Flex>
+                <TabPanels>
+                    {/* TAB 1: INFO */}
+                    <TabPanel>
+                        <SimpleGrid columns={2} spacing={5}>
+                            <FormControl isRequired>
+                                <FormLabel>Tên sản phẩm</FormLabel>
+                                <Input value={formData.productName} onChange={(e) => setFormData({...formData, productName: e.target.value})} bg={inputBg} />
+                            </FormControl>
+                            <FormControl isRequired>
+                                <FormLabel>Danh mục</FormLabel>
+                                <Select value={formData.categoryId} onChange={(e) => setFormData({...formData, categoryId: e.target.value})} bg={inputBg}>
+                                    <option value="">-- Chọn --</option>
+                                    {categories.map(c => <option key={c.id} value={c.id}>{c.categoryName}</option>)}
+                                </Select>
+                            </FormControl>
+                            <FormControl>
+                                <FormLabel>Giá gốc</FormLabel>
+                                <Input type="number" value={formData.originalPrice} onChange={(e) => setFormData({...formData, originalPrice: e.target.value})} bg={inputBg} />
+                            </FormControl>
+                            <FormControl isRequired>
+                                <FormLabel>Giá bán</FormLabel>
+                                <Input type="number" value={formData.salePrice} onChange={(e) => setFormData({...formData, salePrice: e.target.value})} bg={inputBg} />
+                            </FormControl>
+                            <FormControl>
+                                <FormLabel>Thương hiệu</FormLabel>
+                                <Input value={formData.brand} onChange={(e) => setFormData({...formData, brand: e.target.value})} bg={inputBg} />
+                            </FormControl>
+                            <FormControl>
+                                <FormLabel>Model</FormLabel>
+                                <Input value={formData.model} onChange={(e) => setFormData({...formData, model: e.target.value})} bg={inputBg} />
+                            </FormControl>
+                            <FormControl>
+                                <FormLabel>Tồn kho</FormLabel>
+                                <Input type="number" value={formData.stock} onChange={(e) => setFormData({...formData, stock: e.target.value})} bg={inputBg} />
+                            </FormControl>
+                            <FormControl>
+                                <FormLabel>Xuất xứ</FormLabel>
+                                <Input value={formData.origin} onChange={(e) => setFormData({...formData, origin: e.target.value})} bg={inputBg} />
+                            </FormControl>
+                        </SimpleGrid>
+                        <FormControl mt={4}>
+                            <FormLabel>Mô tả chi tiết</FormLabel>
+                            <Textarea rows={6} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} bg={inputBg} />
+                        </FormControl>
+                    </TabPanel>
 
-              <Flex gap={4}>
-                <FormControl isRequired>
-                  <FormLabel>Giá gốc</FormLabel>
-                  <Input
-                    type="number"
-                    name="originalPrice"
-                    value={formData.originalPrice}
-                    onChange={handleChange}
-                    bg={inputBg}
-                    borderColor={borderColor}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Giá bán</FormLabel>
-                  <Input
-                    type="number"
-                    name="salePrice"
-                    value={formData.salePrice}
-                    onChange={handleChange}
-                    bg={inputBg}
-                    borderColor={borderColor}
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Kho</FormLabel>
-                  <Input
-                    type="number"
-                    name="stock"
-                    value={formData.stock}
-                    onChange={handleChange}
-                    bg={inputBg}
-                    borderColor={borderColor}
-                  />
-                </FormControl>
-              </Flex>
+                    {/* TAB 2: SPECS */}
+                    <TabPanel>
+                        <VStack spacing={3} align="stretch">
+                            {specs.map((spec, index) => (
+                                <HStack key={index}>
+                                    <Input placeholder="Tên thông số (VD: RAM)" value={spec.keyName} onChange={(e) => handleSpecChange(index, 'keyName', e.target.value)} bg={inputBg} />
+                                    <Input placeholder="Giá trị (VD: 8GB)" value={spec.value} onChange={(e) => handleSpecChange(index, 'value', e.target.value)} bg={inputBg} />
+                                    <IconButton icon={<DeleteIcon />} colorScheme="red" variant="ghost" onClick={() => handleRemoveSpec(index)} />
+                                </HStack>
+                            ))}
+                            <Button leftIcon={<AddIcon />} onClick={handleAddSpec} variant="outline" borderStyle="dashed">Thêm dòng thông số</Button>
+                        </VStack>
+                    </TabPanel>
 
-              <FormControl>
-                <FormLabel>Mô tả</FormLabel>
-                <Textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  bg={inputBg}
-                  borderColor={borderColor}
-                  rows={4}
-                />
-              </FormControl>
-            </Flex>
+                    {/* TAB 3: IMAGES */}
+                    <TabPanel>
+                        <FormControl mb={6}>
+                            <FormLabel>Tải ảnh mới (Chọn nhiều ảnh)</FormLabel>
+                            <Box border="2px dashed" borderColor="gray.300" borderRadius="md" p={6} textAlign="center" cursor="pointer" _hover={{ borderColor: "blue.500" }} position="relative">
+                                <Input type="file" multiple accept="image/*" position="absolute" top={0} left={0} w="full" h="full" opacity={0} cursor="pointer" onChange={handleFileChange} />
+                                <Icon as={FaCloudUploadAlt} w={10} h={10} color="gray.400" />
+                                <Text mt={2}>Kéo thả hoặc click để chọn ảnh</Text>
+                            </Box>
+                        </FormControl>
+
+                        {/* Preview New Images */}
+                        {previewImages.length > 0 && (
+                            <Box mb={6}>
+                                <Text fontWeight="bold" mb={2}>Ảnh chuẩn bị upload:</Text>
+                                <HStack spacing={4} overflowX="auto">
+                                    {previewImages.map((src, idx) => (
+                                        <Image key={idx} src={src} boxSize="100px" objectFit="cover" borderRadius="md" />
+                                    ))}
+                                </HStack>
+                            </Box>
+                        )}
+
+                        {/* Existing Images (Only in Edit Mode) */}
+                        {currentProduct && existingImages.length > 0 && (
+                            <Box>
+                                <Text fontWeight="bold" mb={2}>Ảnh hiện có (Click ngôi sao để chọn ảnh chính):</Text>
+                                <SimpleGrid columns={4} spacing={4}>
+                                    {existingImages.map((img) => (
+                                        <Box key={img.id} position="relative" border={img.main ? "2px solid" : "1px solid"} borderColor={img.main ? "blue.500" : "gray.600"} borderRadius="md" overflow="hidden">
+                                            <Image src={img.imageUrl} w="full" h="100px" objectFit="cover" bg="white" />
+                                            <Flex position="absolute" bottom={0} left={0} right={0} bg="rgba(0,0,0,0.6)" p={1} justify="space-between">
+                                                <IconButton 
+                                                    icon={<StarIcon />} size="xs" 
+                                                    colorScheme={img.main ? "yellow" : "gray"} 
+                                                    variant={img.main ? "solid" : "ghost"}
+                                                    onClick={() => handleSetMainImage(img.id)}
+                                                />
+                                                <IconButton 
+                                                    icon={<FaTrash />} size="xs" colorScheme="red" variant="ghost" 
+                                                    onClick={() => handleDeleteImage(img.id)}
+                                                />
+                                            </Flex>
+                                        </Box>
+                                    ))}
+                                </SimpleGrid>
+                            </Box>
+                        )}
+                    </TabPanel>
+                </TabPanels>
+            </Tabs>
           </ModalBody>
           <ModalFooter borderTop="1px solid" borderColor={borderColor}>
-            <Button variant="ghost" mr={3} onClick={onClose} color="gray.400">
-              Hủy
-            </Button>
-            <Button colorScheme="blue" onClick={handleSubmit}>
-              Lưu dữ liệu
+            <Button variant="ghost" mr={3} onClick={onClose}>Hủy</Button>
+            <Button colorScheme="blue" onClick={handleSubmit} isLoading={loading}>
+                {currentProduct ? "Cập nhật" : "Tạo mới"}
             </Button>
           </ModalFooter>
         </ModalContent>
