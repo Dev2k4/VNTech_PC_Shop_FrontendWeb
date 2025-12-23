@@ -15,10 +15,30 @@ const GeneralInfoForm = ({ initialData, onSubmit, isLoading }) => {
 
     useEffect(() => {
         if (initialData) {
+            // Helper để parse date từ BE (dd-MM-yyyy hoặc ISO hoặc Array)
+            const parseDate = (date) => {
+                if (!date) return '';
+                
+                // Trường hợp dd-MM-yyyy (từ DTO mới của user)
+                if (typeof date === 'string' && /^\d{2}-\d{2}-\d{4}/.test(date)) {
+                    const [d, m, y] = date.split('-');
+                    return `${y}-${m}-${d}`;
+                }
+
+                // Trường hợp array [y, m, d]
+                if (Array.isArray(date)) {
+                    const [y, m, d] = date;
+                    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                }
+
+                // Trường hợp ISO string (có chữ T)
+                return date.split('T')[0];
+            };
+
             setFormData({
                 fullName: initialData.fullName || '',
                 gender: initialData.gender || '',
-                dateOfBirth: initialData.dateOfBirth ? initialData.dateOfBirth.split('T')[0] : '',
+                dateOfBirth: parseDate(initialData.dateOfBirth),
                 phoneNumber: initialData.phoneNumber || ''
             });
         }
@@ -33,7 +53,7 @@ const GeneralInfoForm = ({ initialData, onSubmit, isLoading }) => {
     return (
         <form onSubmit={handleSubmit}>
             <VStack spacing={5} align="stretch">
-                <FormControl>
+                {/* <FormControl>
                     <FormLabel color={textColor}>Tên đăng nhập</FormLabel>
                     <Input 
                         value={initialData?.username || ''} 
@@ -43,7 +63,7 @@ const GeneralInfoForm = ({ initialData, onSubmit, isLoading }) => {
                         border="none"
                         cursor="not-allowed" 
                     />
-                </FormControl>
+                </FormControl> */}
                 
                 <FormControl>
                     <FormLabel color={textColor}>Email</FormLabel>
