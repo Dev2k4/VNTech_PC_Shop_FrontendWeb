@@ -10,6 +10,7 @@ import CartService from "../../../services/cart.service";
 import AddressService from "../../../services/address.service";
 import OrderService from "../../../services/order.service";
 import PaymentService from "../../../services/payment.service";
+import ShippingService from "../../../services/shipping.service";
 import { useCart } from "../../../context/CartContext";
 import { formatCurrency } from "../../../utils/format";
 import AddressModal from "../../user/components/AddressModal"; // Tái sử dụng Modal xịn xò
@@ -26,6 +27,8 @@ const CheckoutPage = () => {
   const [paymentMethod, setPaymentMethod] = useState("COD"); 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [shippingFee, setShippingFee] = useState(0);
+  const [calculatingFee, setCalculatingFee] = useState(false);
 
   // Modal thêm địa chỉ nhanh
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -70,6 +73,33 @@ const CheckoutPage = () => {
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  // 1.5. Fetch phí ship mỗi khi đổi địa chỉ hoặc giá trị giỏ hàng đổi
+  useEffect(() => {
+    const getShippingFee = async () => {
+      if (!selectedAddressId || !cart?.selectedItemsPrice) return;
+      
+      const selectedAddr = addresses.find(a => a.id === selectedAddressId);
+      if (!selectedAddr) return;
+
+      setCalculatingFee(true);
+      try {
+        const res = await ShippingService.calculateShippingFee({
+          province: selectedAddr.province,
+          orderValue: cart.selectedItemsPrice
+        });
+        if (res.success) {
+          setShippingFee(res.data.shippingFee);
+        }
+      } catch (error) {
+        console.error("Lỗi tính phí ship:", error);
+      } finally {
+        setCalculatingFee(false);
+      }
+    };
+
+    getShippingFee();
+  }, [selectedAddressId, cart?.selectedItemsPrice, addresses]);
 
   // 2. Xử lý Đặt hàng
   const handlePlaceOrder = async () => {
@@ -218,12 +248,18 @@ const CheckoutPage = () => {
                         </Flex>
                         <Flex justify="space-between">
                             <Text color="gray.500">Phí vận chuyển</Text>
-                            <Text fontWeight="bold">Miễn phí</Text>
+                            {calculatingFee ? (
+                                <Spinner size="xs" color="blue.500" />
+                            ) : (
+                                <Text fontWeight="bold">{shippingFee === 0 ? "Miễn phí" : formatCurrency(shippingFee)}</Text>
+                            )}
                         </Flex>
                         <Divider />
                         <Flex justify="space-between" align="center" pt={2}>
                             <Text fontSize="lg" fontWeight="bold">Tổng thanh toán</Text>
-                            <Text fontSize="xl" fontWeight="bold" color="blue.500">{formatCurrency(cart?.selectedItemsPrice)}</Text>
+                            <Text fontSize="xl" fontWeight="bold" color="blue.500">
+                                {formatCurrency((cart?.selectedItemsPrice || 0) + shippingFee)}
+                            </Text>
                         </Flex>
                     </VStack>
 

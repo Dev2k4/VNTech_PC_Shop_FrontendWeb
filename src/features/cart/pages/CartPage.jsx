@@ -8,6 +8,8 @@ import { FaCreditCard, FaTruck, FaTrash } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 import CartService from '../../../services/cart.service';
+import AddressService from '../../../services/address.service';
+import ShippingService from '../../../services/shipping.service';
 import { formatCurrency } from '../../../utils/format';
 import { useCart } from '../../../context/CartContext';
 
@@ -16,6 +18,11 @@ const CartPage = () => {
     const [loading, setLoading] = useState(true);
     const { fetchCartCount } = useCart();
     const toast = useToast();
+
+    // New State for Shipping
+    const [defaultAddress, setDefaultAddress] = useState(null);
+    const [shippingFee, setShippingFee] = useState(0);
+    const [calculatingFee, setCalculatingFee] = useState(false);
 
     // Theme Colors
     const pageBg = useColorModeValue("gray.50", "vntech.darkBg");
@@ -37,9 +44,49 @@ const CartPage = () => {
         }
     };
 
+    const fetchDefaultAddress = async () => {
+        try {
+            const res = await AddressService.getMyAddresses();
+            if (res.success) {
+                const addr = res.data.find(a => a.isDefault) || res.data[0];
+                setDefaultAddress(addr);
+            }
+        } catch (error) {
+            console.error("Lỗi tải địa chỉ:", error);
+        }
+    };
+
     useEffect(() => {
         fetchCart();
+        fetchDefaultAddress();
     }, []);
+
+    // Fetch phí ship khi có địa chỉ và giá trị giỏ hàng đổi
+    useEffect(() => {
+        const getShippingFee = async () => {
+            if (!defaultAddress || !cart?.selectedItemsPrice) {
+                setShippingFee(0);
+                return;
+            }
+
+            setCalculatingFee(true);
+            try {
+                const res = await ShippingService.calculateShippingFee({
+                    province: defaultAddress.province,
+                    orderValue: cart.selectedItemsPrice
+                });
+                if (res.success) {
+                    setShippingFee(res.data.shippingFee);
+                }
+            } catch (error) {
+                console.error("Lỗi tính phí ship:", error);
+            } finally {
+                setCalculatingFee(false);
+            }
+        };
+
+        getShippingFee();
+    }, [defaultAddress, cart?.selectedItemsPrice]);
 
     // Xử lý tăng giảm số lượng
     const handleUpdateQuantity = async (itemId, newQuantity) => {
@@ -182,13 +229,21 @@ const CartPage = () => {
                                     </Flex>
                                     <Flex justify="space-between">
                                         <Text color="gray.500">Vận chuyển:</Text>
-                                        <Badge colorScheme="green">Miễn phí</Badge>
+                                        {calculatingFee ? (
+                                            <Spinner size="xs" color="blue.500" />
+                                        ) : defaultAddress ? (
+                                            <Text fontWeight="bold" color={shippingFee === 0 ? "green.500" : textColor}>
+                                                {shippingFee === 0 ? "Miễn phí" : formatCurrency(shippingFee)}
+                                            </Text>
+                                        ) : (
+                                            <Text fontSize="xs" color="orange.500">Tính tại thanh toán</Text>
+                                        )}
                                     </Flex>
                                     <Divider borderColor={borderColor} />
                                     <Flex justify="space-between" align="center">
                                         <Text fontSize="lg" fontWeight="bold" color={textColor}>Tổng cộng</Text>
                                         <Text fontSize="2xl" fontWeight="bold" bgGradient="linear(to-r, blue.400, purple.500)" bgClip="text">
-                                            {formatCurrency(cart.selectedItemsPrice)}
+                                            {formatCurrency((cart.selectedItemsPrice || 0) + shippingFee)}
                                         </Text>
                                     </Flex>
                                 </VStack>
