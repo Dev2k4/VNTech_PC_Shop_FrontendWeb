@@ -262,7 +262,7 @@ const AdminDashboard = () => {
                             <YAxis axisLine={false} tickLine={false} />
                             <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                             <Legend />
-                            <Line type="monotone" dataKey="count" stroke="#805AD5" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Người dùng mới" />
+                            <Line type="monotone" dataKey="newUsers" stroke="#805AD5" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Người dùng mới" />
                         </LineChart>
                     </ResponsiveContainer>
                 </Box>
@@ -326,7 +326,7 @@ const AdminDashboard = () => {
                                                 </Box>
                                             </Flex>
                                         </Td>
-                                        <Td isNumeric fontWeight="600">{product.soldCount}</Td>
+                                        <Td isNumeric fontWeight="600">{product.soldQuantity}</Td>
                                         <Td isNumeric fontWeight="700" color="green.500">
                                             {formatCurrency(product.revenue)}
                                         </Td>
