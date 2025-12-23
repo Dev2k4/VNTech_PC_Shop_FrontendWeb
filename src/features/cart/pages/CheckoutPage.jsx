@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
   Box, Container, Grid, VStack, Heading, Text, Flex, Radio, RadioGroup, Button, Divider,
-  useToast, Stack, useColorModeValue, Icon, Badge, useDisclosure, Spinner
+  useToast, Stack, useColorModeValue, Icon, Badge, useDisclosure, Spinner, Input,
+  Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton, 
+  Tooltip, SimpleGrid, Tag, HStack
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { FaMapMarkerAlt, FaCreditCard, FaClipboardList, FaPlus, FaCheckCircle } from "react-icons/fa";
@@ -11,6 +13,8 @@ import AddressService from "../../../services/address.service";
 import OrderService from "../../../services/order.service";
 import PaymentService from "../../../services/payment.service";
 import ShippingService from "../../../services/shipping.service";
+import CouponService from "../../../services/couponService";
+import UserService from "../../../services/user.service";
 import { useCart } from "../../../context/CartContext";
 import { formatCurrency } from "../../../utils/format";
 import AddressModal from "../../user/components/AddressModal"; // Tái sử dụng Modal xịn xò
@@ -30,8 +34,17 @@ const CheckoutPage = () => {
   const [shippingFee, setShippingFee] = useState(0);
   const [calculatingFee, setCalculatingFee] = useState(false);
 
+  // Voucher state
+  const [user, setUser] = useState(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+
   // Modal thêm địa chỉ nhanh
   const { isOpen, onOpen, onClose } = useDisclosure();
+  // Modal chọn voucher
+  const { isOpen: isCouponOpen, onOpen: onCouponOpen, onClose: onCouponClose } = useDisclosure();
 
   // Theme Colors
   const bg = useColorModeValue("gray.50", "vntech.darkBg");
@@ -42,9 +55,11 @@ const CheckoutPage = () => {
   // 1. Load Giỏ hàng & Địa chỉ cùng lúc
   const fetchData = async () => {
     try {
-      const [cartRes, addrRes] = await Promise.all([
+      const [cartRes, addrRes, userRes, couponRes] = await Promise.all([
         CartService.getCart(),
-        AddressService.getMyAddresses()
+        AddressService.getMyAddresses(),
+        UserService.getProfile(),
+        CouponService.getActiveCoupons()
       ]);
 
       // Xử lý Giỏ hàng
@@ -64,6 +79,17 @@ const CheckoutPage = () => {
         const defaultAddr = addrList.find(a => a.isDefault) || addrList[0];
         if (defaultAddr) setSelectedAddressId(defaultAddr.id);
       }
+
+      // Profile (cho userId)
+      if (userRes.success) {
+        setUser(userRes.data);
+      }
+
+      // Coupons (xử lý cả APIResponse hoặc list thô)
+      if (couponRes) {
+        const couponList = couponRes.success ? couponRes.data : couponRes;
+        setAvailableCoupons(Array.isArray(couponList) ? couponList : []);
+      }
     } catch (error) {
       console.error(error);
       toast({ title: "Lỗi tải dữ liệu", status: "error" });
@@ -76,30 +102,92 @@ const CheckoutPage = () => {
 
   // 1.5. Fetch phí ship mỗi khi đổi địa chỉ hoặc giá trị giỏ hàng đổi
   useEffect(() => {
-    const getShippingFee = async () => {
-      if (!selectedAddressId || !cart?.selectedItemsPrice) return;
-      
-      const selectedAddr = addresses.find(a => a.id === selectedAddressId);
-      if (!selectedAddr) return;
-
-      setCalculatingFee(true);
-      try {
-        const res = await ShippingService.calculateShippingFee({
-          province: selectedAddr.province,
-          orderValue: cart.selectedItemsPrice
-        });
-        if (res.success) {
-          setShippingFee(res.data.shippingFee);
+      const getShippingFee = async () => {
+        if (!selectedAddressId || !cart?.selectedItemsPrice) return;
+        
+        const selectedAddr = addresses.find(a => a.id === selectedAddressId);
+        if (!selectedAddr) return;
+  
+        setCalculatingFee(true);
+        try {
+          const res = await ShippingService.calculateShippingFee({
+            province: selectedAddr.province,
+            orderValue: cart.selectedItemsPrice
+          });
+          if (res.success) {
+            setShippingFee(res.data.shippingFee);
+          }
+        } catch (error) {
+          console.error("Lỗi tính phí ship:", error);
+        } finally {
+          setCalculatingFee(false);
         }
-      } catch (error) {
-        console.error("Lỗi tính phí ship:", error);
-      } finally {
-        setCalculatingFee(false);
-      }
+      };
+  
+      getShippingFee();
+    }, [selectedAddressId, cart?.selectedItemsPrice, addresses]);
+
+    // 1.6. Xử lý Voucher
+    const handleApplyCoupon = async () => {
+        if (!couponInput.trim()) return;
+        setValidatingCoupon(true);
+        try {
+            const res = await CouponService.validateCoupon({
+                couponCode: couponInput.trim(),
+                userId: user.id,
+                orderValue: cart.selectedItemsPrice,
+                shippingFee: shippingFee
+            });
+
+            if (res.isValid) {
+                setAppliedCoupon(res);
+                toast({ title: "Đã áp dụng mã giảm giá", status: "success" });
+            } else {
+                toast({ title: "Mã không hợp lệ", description: res.message, status: "error" });
+            }
+        } catch (error) {
+            toast({ title: "Lỗi kiểm tra mã", status: "error" });
+        } finally {
+            setValidatingCoupon(false);
+        }
     };
 
-    getShippingFee();
-  }, [selectedAddressId, cart?.selectedItemsPrice, addresses]);
+    const handleRemoveCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponInput("");
+    };
+
+    const handleSelectVoucherFromList = (code) => {
+        setCouponInput(code);
+        onCouponClose();
+        // Áp dụng luôn sau khi đóng modal (dùng useEffect hoặc gọi trực tiếp với code)
+        setTimeout(() => {
+            validateAndApply(code);
+        }, 100);
+    };
+
+    const validateAndApply = async (code) => {
+        setValidatingCoupon(true);
+        try {
+            const res = await CouponService.validateCoupon({
+                couponCode: code,
+                userId: user.id,
+                orderValue: cart.selectedItemsPrice,
+                shippingFee: shippingFee
+            });
+
+            if (res.isValid) {
+                setAppliedCoupon(res);
+                toast({ title: "Đã áp dụng mã giảm giữ", status: "success" });
+            } else {
+                toast({ title: "Mã không hợp lệ", description: res.message, status: "error" });
+            }
+        } catch (error) {
+            toast({ title: "Lỗi kiểm tra mã", status: "error" });
+        } finally {
+            setValidatingCoupon(false);
+        }
+    };
 
   // 2. Xử lý Đặt hàng
   const handlePlaceOrder = async () => {
@@ -115,7 +203,7 @@ const CheckoutPage = () => {
             addressId: selectedAddressId,
             paymentMethod: paymentMethod,
             note: "", // Có thể thêm textarea note nếu muốn
-            couponCode: null // Phase sau sẽ làm coupon
+            couponCode: appliedCoupon ? appliedCoupon.couponCode : null
         };
         
         const orderRes = await OrderService.createOrder(orderPayload);
@@ -241,6 +329,51 @@ const CheckoutPage = () => {
 
                     <Divider my={6} borderColor={borderColor} />
 
+                    {/* VOUCHER SECTION */}
+                    <Box mb={6}>
+                        <Text fontWeight="bold" mb={2} fontSize="sm">Mã giảm giá</Text>
+                        {!appliedCoupon ? (
+                            <Flex gap={2}>
+                                <Input 
+                                    placeholder="Nhập mã voucher..." 
+                                    size="sm" 
+                                    value={couponInput}
+                                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                                    bg={useColorModeValue("white", "whiteAlpha.100")}
+                                />
+                                <Button 
+                                    size="sm" 
+                                    colorScheme="blue" 
+                                    onClick={handleApplyCoupon}
+                                    isLoading={validatingCoupon}
+                                    isDisabled={!couponInput}
+                                >
+                                    ÁP DỤNG
+                                </Button>
+                            </Flex>
+                        ) : (
+                            <Flex 
+                                p={2} bg="green.50" border="1px dashed" borderColor="green.500" 
+                                borderRadius="md" justify="space-between" align="center"
+                            >
+                                <Box>
+                                    <Text fontSize="xs" fontWeight="bold" color="green.700">{appliedCoupon.couponCode}</Text>
+                                    <Text fontSize="2xs" color="green.600">Đã giảm {formatCurrency(appliedCoupon.discountAmount)}</Text>
+                                </Box>
+                                <Button size="xs" colorScheme="red" variant="ghost" onClick={handleRemoveCoupon}>Gỡ</Button>
+                            </Flex>
+                        )}
+                        <Button 
+                            mt={2} w="full" size="xs" variant="ghost" colorScheme="purple"
+                            leftIcon={<Icon as={FaCheckCircle} />}
+                            onClick={onCouponOpen}
+                        >
+                            Chọn từ danh sách Voucher
+                        </Button>
+                    </Box>
+
+                    <Divider my={6} borderColor={borderColor} />
+
                     <VStack spacing={2} align="stretch" fontSize="sm">
                         <Flex justify="space-between">
                             <Text color="gray.500">Tổng tiền hàng</Text>
@@ -254,11 +387,17 @@ const CheckoutPage = () => {
                                 <Text fontWeight="bold">{shippingFee === 0 ? "Miễn phí" : formatCurrency(shippingFee)}</Text>
                             )}
                         </Flex>
+                        {appliedCoupon && (
+                            <Flex justify="space-between">
+                                <Text color="gray.500">Mã giảm giá</Text>
+                                <Text fontWeight="bold" color="red.500">-{formatCurrency(appliedCoupon.discountAmount)}</Text>
+                            </Flex>
+                        )}
                         <Divider />
                         <Flex justify="space-between" align="center" pt={2}>
                             <Text fontSize="lg" fontWeight="bold">Tổng thanh toán</Text>
                             <Text fontSize="xl" fontWeight="bold" color="blue.500">
-                                {formatCurrency((cart?.selectedItemsPrice || 0) + shippingFee)}
+                                {formatCurrency((cart?.selectedItemsPrice || 0) + shippingFee - (appliedCoupon?.discountAmount || 0))}
                             </Text>
                         </Flex>
                     </VStack>
@@ -281,6 +420,51 @@ const CheckoutPage = () => {
             onClose={onClose} 
             onSuccess={fetchData} 
         />
+
+        {/* Modal Chọn Voucher */}
+        <Modal isOpen={isCouponOpen} onClose={onCouponClose} size="xl" scrollBehavior="inside">
+            <ModalOverlay backdropFilter="blur(5px)" />
+            <ModalContent bg={bg} color={textColor} borderRadius="2xl">
+                <ModalHeader borderBottomWidth="1px" borderColor={borderColor}>
+                    Vouchers của shop
+                </ModalHeader>
+                <ModalCloseButton />
+                <ModalBody p={6}>
+                    <SimpleGrid columns={1} spacing={4}>
+                        {availableCoupons.length === 0 ? (
+                            <Text textAlign="center" color="gray.500">Hiện không có mã giảm giá nào.</Text>
+                        ) : (
+                            availableCoupons.map((coupon) => (
+                                <Box 
+                                    key={coupon.id} p={4} borderRadius="xl" border="1px solid" borderColor={borderColor}
+                                    bg={cardBg} transition="all 0.2s" _hover={{ borderColor: 'blue.400', shadow: 'sm' }}
+                                >
+                                    <Flex justify="space-between" align="center">
+                                        <VStack align="start" spacing={1} flex="1">
+                                            <HStack>
+                                                <Badge colorScheme="purple" fontSize="sm">{coupon.code}</Badge>
+                                                <Tag size="sm" variant="subtle" colorScheme="blue">
+                                                    {coupon.discountType === 'PERCENTAGE' ? `${coupon.discountValue}%` : formatCurrency(coupon.discountValue)}
+                                                </Tag>
+                                            </HStack>
+                                            <Text fontWeight="bold" fontSize="sm">{coupon.description || `Giảm cho đơn từ ${formatCurrency(coupon.minOrderValue)}`}</Text>
+                                            <Text fontSize="xs" color="gray.500">HSD: {new Date(coupon.endDate).toLocaleDateString('vi-VN')}</Text>
+                                        </VStack>
+                                        <Button 
+                                            size="sm" colorScheme="blue" variant="outline"
+                                            onClick={() => handleSelectVoucherFromList(coupon.code)}
+                                            isDisabled={cart?.selectedItemsPrice < coupon.minOrderValue}
+                                        >
+                                            Sử dụng
+                                        </Button>
+                                    </Flex>
+                                </Box>
+                            ))
+                        )}
+                    </SimpleGrid>
+                </ModalBody>
+            </ModalContent>
+        </Modal>
 
       </Container>
     </Box>
