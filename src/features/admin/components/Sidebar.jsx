@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Flex, Icon, Text, VStack, useColorModeValue } from '@chakra-ui/react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaHome, FaBox, FaList, FaShoppingCart, FaUsers, FaChartPie, FaMicrochip } from 'react-icons/fa';
+import { FaHome, FaBox, FaList, FaShoppingCart, FaUsers, FaChartPie, FaMicrochip, FaTicketAlt } from 'react-icons/fa';
 
 const NavItem = ({ icon, children, to }) => {
   const location = useLocation();
@@ -52,6 +52,7 @@ const Sidebar = (props) => {
         <NavItem icon={FaList} to="/admin/categories">Danh mục</NavItem>
         <NavItem icon={FaShoppingCart} to="/admin/orders">Đơn hàng</NavItem>
         <NavItem icon={FaUsers} to="/admin/users">Người dùng</NavItem>
+        <NavItem icon={FaTicketAlt} to="/admin/coupons">Mã giảm giá</NavItem>
         
         <Box my={4} mx={8} borderTop="1px" borderColor={borderColor} />
         <NavItem icon={FaHome} to="/">Về trang chủ</NavItem>

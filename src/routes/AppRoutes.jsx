@@ -23,6 +23,7 @@ import AdminCategoryPage from '../features/admin/pages/AdminCategoryPage';
 import AdminProductPage from '../features/admin/pages/AdminProductPage';
 import AdminOrderPage from '../features/admin/pages/AdminOrderPage';
 import AdminUserPage from '../features/admin/pages/AdminUserPage';
+import AdminCouponPage from '../features/admin/pages/AdminCouponPage';
 
 const AppRoutes = () => {
   return (
@@ -53,6 +54,7 @@ const AppRoutes = () => {
         <Route path="products" element={<AdminProductPage />} />
         <Route path="orders" element={<AdminOrderPage />} />
         <Route path="users" element={<AdminUserPage />} />
+        <Route path="coupons" element={<AdminCouponPage />} />
       </Route>
 
     </Routes>
