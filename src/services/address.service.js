@@ -23,7 +23,15 @@ const AddressService = {
 
     getWards: (districtCode) => {
         return axiosClient.get(`/address/wards?districtCode=${districtCode}`);
+    },
+    deleteAddress: (id) => {
+        return axiosClient.delete(`/user/addresses/${id}`);
+    },
+
+    setDefault: (id) => {
+        return axiosClient.put(`/user/addresses/${id}/default`);
     }
+    
 };
 
 export default AddressService;

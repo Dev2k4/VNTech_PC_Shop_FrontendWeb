@@ -8,11 +8,11 @@ import HomePage from '../features/product/pages/HomePage';
 import ProductDetailPage from '../features/product/pages/ProductDetailPage';
 import CartPage from '../features/cart/pages/CartPage';
 import CheckoutPage from '../features/cart/pages/CheckoutPage';
-
+import ProductListPage from '../features/product/pages/ProductListPage';
 import LoginPage from '../features/auth/pages/LoginPage';
 import RegisterPage from '../features/auth/pages/RegisterPage';
 import ForgotPasswordPage from '../features/auth/pages/ForgotPasswordPage';
-
+import PCBuilderPage from '../features/product/pages/PCBuilderPage';
 import ProfilePage from '../features/user/pages/ProfilePage';
 import OrderHistoryPage from '../features/order/pages/OrderHistoryPage';
 import OrderDetailPage from '../features/order/pages/OrderDetailPage';
@@ -38,6 +38,8 @@ const AppRoutes = () => {
         <Route path="profile" element={<ProfilePage />} />
         <Route path="user/orders" element={<OrderHistoryPage />} />
         <Route path="user/orders/:id" element={<OrderDetailPage />} />
+        <Route path="build-pc" element={<PCBuilderPage />} />
+        <Route path="products" element={<ProductListPage />} />
       </Route>
 
       {/* --- AUTH ROUTES --- */}

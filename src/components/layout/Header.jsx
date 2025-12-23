@@ -8,19 +8,26 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import {
   FaMicrochip, FaSearch, FaShoppingCart, FaBars, FaUser, FaSignOutAlt,
-  FaHistory, FaMoon, FaSun, FaCog
+  FaHistory, FaMoon, FaSun, FaCog, FaTools
 } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import AuthService from "../../services/auth.service";
 
 const Header = () => {
   const { cartCount } = useCart();
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
   const { colorMode, toggleColorMode } = useColorMode();
 
   const [user, setUser] = useState(null);
   const [isScrolled, setIsScrolled] = useState(false);
-
+const handleSearch = () => {
+    if (searchTerm.trim()) {
+        // Chuyển hướng sang trang /products kèm tham số search
+        // encodeURIComponent để xử lý các ký tự đặc biệt (dấu cách, tiếng việt)
+        navigate(`/products?search=${encodeURIComponent(searchTerm)}`);
+    }
+  };
   // --- TECH THEME COLORS ---
   const bgHeader = useColorModeValue(
     isScrolled ? "white" : "rgba(255, 255, 255, 0.9)",
@@ -134,16 +141,35 @@ const Header = () => {
           {/* 2. SEARCH BAR */}
           <Box display={{ base: "none", md: "block" }} flex="1" maxW="500px" mx={8}>
              <InputGroup size="md">
-                <Input 
-                    placeholder="Tìm linh kiện, laptop, gear..." 
-                    bg={useColorModeValue("gray.100", "whiteAlpha.100")}
-                    border="none" color={textColor} focusBorderColor="blue.500" borderRadius="full"
-                    _placeholder={{ color: "gray.500" }}
-                />
-                <InputRightElement>
-                    <IconButton icon={<FaSearch />} size="sm" variant="ghost" color="blue.500" borderRadius="full" aria-label="Search"/>
-                </InputRightElement>
-             </InputGroup>
+    <Input 
+        placeholder="Tìm linh kiện, laptop, gear..." 
+        bg={useColorModeValue("gray.100", "whiteAlpha.100")}
+        border="none"
+        color={textColor}
+        focusBorderColor="blue.500"
+        borderRadius="full"
+        _placeholder={{ color: "gray.500" }}
+        
+        // --- Bổ sung logic Search ---
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSearch();
+        }}
+        // ----------------------------
+    />
+    <InputRightElement>
+        <IconButton 
+            icon={<FaSearch />} 
+            size="sm" 
+            variant="ghost" 
+            color="blue.500" 
+            borderRadius="full" 
+            aria-label="Search"
+            onClick={handleSearch} // Bắt sự kiện click
+        />
+    </InputRightElement>
+  </InputGroup>
           </Box>
 
           {/* 3. RIGHT ACTIONS */}
@@ -201,6 +227,15 @@ const Header = () => {
                 </Button>
             )}
           </HStack>
+          <Button 
+    as={Link} to="/build-pc" 
+    leftIcon={<FaTools />} 
+    variant="ghost" 
+    color={iconColor}
+    display={{ base: "none", md: "flex" }}
+>
+    Xây cấu hình
+</Button>
         </Flex>
       </Container>
     </Box>
