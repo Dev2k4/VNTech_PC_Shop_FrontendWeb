@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Container, Heading, Text, Button, Icon, VStack, useColorModeValue, Spinner, Divider, HStack, Badge } from '@chakra-ui/react';
+import React, { useEffect, useState, useRef } from 'react';
+import { Box, Container, Heading, Text, Button, Icon, VStack, useColorModeValue, Spinner, Divider, HStack, Badge, useToast } from '@chakra-ui/react';
 import { CheckCircleIcon, WarningIcon, InfoIcon } from '@chakra-ui/icons';
 import { Link, useSearchParams } from 'react-router-dom';
 import axiosClient from '../../../config/axiosClient';
@@ -8,10 +8,12 @@ import { useCart } from '../../../context/CartContext';
 const PaymentResultPage = () => {
     const [searchParams] = useSearchParams();
     const { fetchCartCount } = useCart();
+    const toast = useToast();
+    const toastShown = useRef(false);
     
     // Các tham số từ VNPay hoặc Backend redirect
-    const status = searchParams.get('status'); // Backend redirect dùng 'status'
-    const vnpResponseCode = searchParams.get('vnp_ResponseCode'); // VNPay trực tiếp dùng 'vnp_ResponseCode'
+    const status = searchParams.get('status'); 
+    const vnpResponseCode = searchParams.get('vnp_ResponseCode'); 
     const orderId = searchParams.get('orderId');
     const method = searchParams.get('method');
     const message = searchParams.get('message');
@@ -20,11 +22,33 @@ const PaymentResultPage = () => {
     const [verifying, setVerifying] = useState(false);
 
     useEffect(() => {
-        // Cập nhật lại số lượng giỏ hàng phòng trường hợp chưa update
         fetchCartCount();
 
+        // Hiển thị thông báo Toast một lần duy nhất khi load trang
+        if (!toastShown.current) {
+            if (isSuccess) {
+                toast({
+                    title: "Thanh toán thành công!",
+                    description: "Cảm ơn bạn đã tin tưởng VNTech Shop.",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "top"
+                });
+            } else if (status || vnpResponseCode) {
+                toast({
+                    title: "Thanh toán thất bại",
+                    description: message || "Đã có lỗi xảy ra trong quá trình xử lý.",
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "top"
+                });
+            }
+            toastShown.current = true;
+        }
+
         const verifyPayment = async () => {
-            // Nếu có các tham số VNPay thô (vnp_...) thì nên gọi verify
             if (vnpResponseCode && !status) {
                 setVerifying(true);
                 try {
@@ -38,7 +62,7 @@ const PaymentResultPage = () => {
         };
         
         verifyPayment();
-    }, [searchParams, vnpResponseCode, status, fetchCartCount]);
+    }, [searchParams, vnpResponseCode, status, fetchCartCount, isSuccess, message, toast]);
 
     const bg = useColorModeValue("white", "gray.800");
     const textColor = useColorModeValue("gray.600", "gray.400");
@@ -85,10 +109,12 @@ const PaymentResultPage = () => {
                             </HStack>
                         )}
                         
-                        {method && (
+                        {(method || vnpResponseCode) && (
                             <HStack justify="center">
                                 <Text fontWeight="bold">Phương thức:</Text>
-                                <Text color="blue.500">{method === 'COD' ? "Thanh toán khi nhận hàng" : "VNPay"}</Text>
+                                <Text color="blue.500">
+                                    {(method === 'COD') ? "Thanh toán khi nhận hàng" : "VNPay"}
+                                </Text>
                             </HStack>
                         )}
                     </VStack>

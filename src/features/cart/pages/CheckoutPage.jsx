@@ -195,7 +195,7 @@ const CheckoutPage = () => {
 
             if (res.isValid) {
                 setAppliedCoupon(res);
-                toast({ title: "Đã áp dụng mã giảm giữ", status: "success" });
+                toast({ title: "Đã áp dụng mã giảm giá", status: "success" });
             } else {
                 toast({ title: "Mã không hợp lệ", description: res.message, status: "error" });
             }
