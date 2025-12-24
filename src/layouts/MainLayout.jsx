@@ -3,6 +3,8 @@ import { Box, useColorModeValue, Flex } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';  
+import FacebookMessenger from '../components/common/FacebookMessenger';
+import MessengerButton from "../components/common/MessengerButton";
 
 const MainLayout = () => {
   const bgColor = useColorModeValue("apple.lightBg", "apple.bg");
@@ -16,6 +18,8 @@ const MainLayout = () => {
       </Box>
 
       <Footer />
+      <FacebookMessenger />
+      <MessengerButton />
     </Flex>
   );
 };
