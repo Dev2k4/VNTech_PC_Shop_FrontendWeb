@@ -18,6 +18,10 @@ const OrderService = {
         return axiosClient.post(`/user/orders/${orderId}/cancel`, null, {
             params: { reason }
         });
+    },
+
+    buyNow: (data) => {
+        return axiosClient.post('/user/orders/buy-now', data);
     }
 };
 

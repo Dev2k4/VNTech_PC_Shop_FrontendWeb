@@ -1,12 +1,12 @@
 
  import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Box, Container, Grid, Image, Text, Button, Heading, Flex, VStack, HStack,
   Spinner, Divider, useToast, useColorModeValue, Icon, Badge, SimpleGrid, useDisclosure
 } from "@chakra-ui/react";
 import { StarIcon, CheckCircleIcon } from "@chakra-ui/icons";
-import { FaCartPlus, FaShippingFast, FaShieldAlt } from "react-icons/fa";
+import { FaCartPlus, FaShippingFast, FaShieldAlt, FaRocket } from "react-icons/fa";
 
 import ProductService from "../../../services/product.service";
 import ReviewService from "../../../services/review.service";
@@ -25,6 +25,7 @@ const FeatureItem = ({ icon, text }) => (
 
 const ProductDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState("");
@@ -85,6 +86,22 @@ const ProductDetailPage = () => {
     await addToCart(product, 1);
   };
 
+  const handleBuyNow = () => {
+    if (product.stock <= 0) {
+      toast({ title: "Hết hàng", status: "warning" });
+      return;
+    }
+    // Chuyển sang Checkout với state Buy Now
+    navigate("/checkout", { 
+      state: { 
+        buyNow: {
+          product: product,
+          quantity: 1
+        } 
+      } 
+    });
+  };
+
   if (loading || !product) return <Flex justify="center" py={20}><Spinner size="xl" color="blue.500"/></Flex>;
 
   return (
@@ -114,7 +131,7 @@ const ProductDetailPage = () => {
 
                 {/* Product Info */}
                 <VStack align="start" spacing={6}>
-                    <Box>
+                    <Box w="full">
                         <Badge colorScheme="blue" mb={2}>{product.brand}</Badge>
                         <Heading size="xl" color={textColor} mb={2}>{product.productName}</Heading>
                         <Flex align="center" mb={4}>
@@ -127,12 +144,24 @@ const ProductDetailPage = () => {
                         </Flex>
                     </Box>
 
-                    <Button 
-                        leftIcon={<FaCartPlus />} size="lg" colorScheme="blue" w="full" h="56px" fontSize="lg"
-                        onClick={handleAddToCart} isDisabled={product.stock <= 0}
-                    >
-                        {product.stock > 0 ? "THÊM VÀO GIỎ" : "TẠM HẾT HÀNG"}
-                    </Button>
+                    <HStack spacing={4} w="full">
+                        <Button 
+                            leftIcon={<FaCartPlus />} size="lg" colorScheme="blue" variant="outline" flex="1" h="56px" fontSize="lg"
+                            onClick={handleAddToCart} isDisabled={product.stock <= 0}
+                            _hover={{ bg: "blue.50" }}
+                        >
+                            THÊM GIỎ HÀNG
+                        </Button>
+                        <Button 
+                            leftIcon={<FaRocket />} size="lg" colorScheme="blue" flex="1" h="56px" fontSize="lg"
+                            onClick={handleBuyNow} isDisabled={product.stock <= 0}
+                            boxShadow="lg"
+                            _hover={{ transform: "translateY(-2px)", boxShadow: "xl" }}
+                            transition="all 0.2s"
+                        >
+                            MUA NGAY
+                        </Button>
+                    </HStack>
                     
                     <SimpleGrid columns={2} spacing={4} mt={6} w="full">
                         <FeatureItem icon={CheckCircleIcon} text="Hàng chính hãng 100%" />

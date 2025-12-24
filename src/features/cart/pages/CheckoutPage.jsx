@@ -5,7 +5,7 @@ import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalCloseButton, 
   Tooltip, SimpleGrid, Tag, HStack
 } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FaMapMarkerAlt, FaCreditCard, FaClipboardList, FaPlus, FaCheckCircle } from "react-icons/fa";
 
 import CartService from "../../../services/cart.service";
@@ -21,8 +21,11 @@ import AddressModal from "../../user/components/AddressModal"; // Tái sử dụ
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   const { fetchCartCount } = useCart();
+
+  const buyNowData = location.state?.buyNow;
 
   // State
   const [cart, setCart] = useState(null);
@@ -62,8 +65,20 @@ const CheckoutPage = () => {
         CouponService.getActiveCoupons()
       ]);
 
-      // Xử lý Giỏ hàng
-      if (cartRes.success) {
+      // Xử lý Giỏ hàng/MUA NGAY
+      if (buyNowData) {
+        setCart({
+          cartItems: [{
+              id: 'buynow',
+              product: buyNowData.product,
+              quantity: buyNowData.quantity,
+              price: buyNowData.product.salePrice,
+              selected: true
+          }],
+          selectedItems: 1,
+          selectedItemsPrice: buyNowData.product.salePrice * buyNowData.quantity
+        });
+      } else if (cartRes.success) {
         setCart(cartRes.data);
         if (!cartRes.data || cartRes.data.selectedItems === 0) {
             toast({ title: "Chưa chọn sản phẩm nào", status: "warning" });
@@ -198,15 +213,30 @@ const CheckoutPage = () => {
 
     setProcessing(true);
     try {
-        // Bước 1: Tạo đơn hàng (Order)
-        const orderPayload = {
-            addressId: selectedAddressId,
-            paymentMethod: paymentMethod,
-            note: "", // Có thể thêm textarea note nếu muốn
-            couponCode: appliedCoupon ? appliedCoupon.couponCode : null
-        };
+        let orderRes;
         
-        const orderRes = await OrderService.createOrder(orderPayload);
+        if (buyNowData) {
+            // Bước 1: Gọi API Buy Now
+            const buyNowPayload = {
+                productId: buyNowData.product.id,
+                quantity: buyNowData.quantity,
+                addressId: selectedAddressId,
+                paymentMethod: paymentMethod,
+                note: "",
+                couponCode: appliedCoupon ? appliedCoupon.couponCode : null
+            };
+            orderRes = await OrderService.buyNow(buyNowPayload);
+        } else {
+            // Bước 1: Tạo đơn hàng từ giỏ hàng
+            const orderPayload = {
+                addressId: selectedAddressId,
+                paymentMethod: paymentMethod,
+                note: "", 
+                couponCode: appliedCoupon ? appliedCoupon.couponCode : null
+            };
+            orderRes = await OrderService.createOrder(orderPayload);
+        }
+
         if (!orderRes.success) throw new Error(orderRes.message);
 
         const orderId = orderRes.data.id;
