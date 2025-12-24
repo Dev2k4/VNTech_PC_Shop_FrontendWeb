@@ -54,6 +54,8 @@ const CheckoutPage = () => {
   const cardBg = useColorModeValue("white", "vntech.cardBg");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
   const textColor = useColorModeValue("gray.800", "white");
+  const addressActiveBg = useColorModeValue("blue.50", "whiteAlpha.100");
+  const inputBg = useColorModeValue("white", "whiteAlpha.100");
 
   // 1. Load Giỏ hàng & Địa chỉ cùng lúc
   const fetchData = async () => {
@@ -193,7 +195,7 @@ const CheckoutPage = () => {
 
             if (res.isValid) {
                 setAppliedCoupon(res);
-                toast({ title: "Đã áp dụng mã giảm giữ", status: "success" });
+                toast({ title: "Đã áp dụng mã giảm giá", status: "success" });
             } else {
                 toast({ title: "Mã không hợp lệ", description: res.message, status: "error" });
             }
@@ -237,34 +239,63 @@ const CheckoutPage = () => {
             orderRes = await OrderService.createOrder(orderPayload);
         }
 
-        if (!orderRes.success) throw new Error(orderRes.message);
+        if (!orderRes || !orderRes.success) {
+            console.error("Order creation failed:", orderRes);
+            throw new Error(orderRes?.message || "Lỗi tạo đơn hàng");
+        }
 
-        const orderId = orderRes.data.id;
-        const finalPrice = orderRes.data.finalPrice;
+        const orderData = orderRes.data;
+        const orderId = orderData?.id || orderData?.orderId;
+        const finalPrice = orderData?.finalPrice;
 
-        // Bước 2: Xử lý thanh toán
-        if (paymentMethod === "VNPAY") {
-            // Gọi API lấy link VNPAY
-            const payRes = await PaymentService.createPayment({
-                orderId: orderId,
-                amount: finalPrice,
-                paymentMethod: "VNPAY",
-                bankCode: null, // Để null cho user tự chọn bank tại cổng VNPAY
-                language: "vn"
-            });
-            // Chuyển hướng sang VNPAY
-            if(payRes.paymentUrl) {
-                window.location.href = payRes.paymentUrl;
+        console.log("Order created successfully:", { orderId, finalPrice });
+
+        if (!orderId) throw new Error("Không lấy được mã đơn hàng sau khi tạo");
+
+        // Bước 2: Gọi API createPayment để hoàn tất (tạo bản ghi thanh toán & lấy link VNPay nếu cần)
+        const payRes = await PaymentService.createPayment({
+            orderId: orderId,
+            amount: finalPrice,
+            paymentMethod: paymentMethod,
+            bankCode: null, 
+            language: "vn"
+        });
+
+        console.log("Payment creation response:", payRes);
+
+        // Kiểm tra success linh hoạt (đề phòng backend trả về format khác hoặc payload trực tiếp)
+        const isPaySuccess = payRes && (payRes.success === true || payRes.code === "00" || payRes.status === "00");
+        
+        if (isPaySuccess) {
+            // Lấy data: ưu tiên payRes.data, nếu không có thì dùng chính payRes (nếu backend trả payload trực tiếp)
+            const paymentData = payRes.data || payRes;
+            
+            if (paymentMethod === "VNPAY" && paymentData?.paymentUrl) {
+                // Chuyển hướng sang VNPAY
+                window.location.href = paymentData.paymentUrl;
+            } else if (paymentMethod === "COD") {
+                // COD: Xác nhận thành công và chuyển hướng đến trang kết quả
+                toast({ title: "Đặt hàng thành công!", status: "success" });
+                fetchCartCount();
+                navigate(`/payment/result?orderId=${orderId}&method=COD&status=00`);
+            } else {
+                navigate(`/payment/result?orderId=${orderId}&method=${paymentMethod}&status=00`);
             }
         } else {
-            // COD: Chuyển hướng đến trang thành công
-            toast({ title: "Đặt hàng thành công!", status: "success" });
-            fetchCartCount(); // Update lại icon giỏ hàng
-            navigate("/payment/return?vnp_ResponseCode=00"); // Giả lập thành công cho COD
+            console.error("Payment registration failed details:", payRes);
+            throw new Error(payRes?.message || "Lỗi đăng ký thanh toán");
         }
 
     } catch (error) {
-        toast({ title: "Đặt hàng thất bại", description: error.response?.data?.message, status: "error" });
+        console.error("Checkout process error:", error);
+        const errorMsg = error.response?.data?.message || error.message || "Có lỗi xảy ra, vui lòng thử lại";
+        toast({ 
+            title: "Đặt hàng thất bại", 
+            description: errorMsg, 
+            status: "error",
+            duration: 5000,
+            isClosable: true
+        });
     } finally {
         setProcessing(false);
     }
@@ -304,7 +335,7 @@ const CheckoutPage = () => {
                                         border="1px solid" 
                                         borderColor={selectedAddressId === addr.id ? "blue.500" : borderColor} 
                                         borderRadius="lg"
-                                        bg={selectedAddressId === addr.id ? useColorModeValue("blue.50", "whiteAlpha.100") : "transparent"}
+                                        bg={selectedAddressId === addr.id ? addressActiveBg : "transparent"}
                                         cursor="pointer"
                                         onClick={() => setSelectedAddressId(addr.id)}
                                         position="relative"
@@ -369,7 +400,7 @@ const CheckoutPage = () => {
                                     size="sm" 
                                     value={couponInput}
                                     onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                                    bg={useColorModeValue("white", "whiteAlpha.100")}
+                                    bg={inputBg}
                                 />
                                 <Button 
                                     size="sm" 
