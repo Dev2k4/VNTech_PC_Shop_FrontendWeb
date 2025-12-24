@@ -5,6 +5,7 @@ import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';  
 import FacebookMessenger from '../components/common/FacebookMessenger';
 import MessengerButton from "../components/common/MessengerButton";
+import ChatBot from "../components/common/ChatBot";
 
 const MainLayout = () => {
   const bgColor = useColorModeValue("apple.lightBg", "apple.bg");
@@ -20,6 +21,7 @@ const MainLayout = () => {
       <Footer />
       <FacebookMessenger />
       <MessengerButton />
+      <ChatBot />
     </Flex>
   );
 };
