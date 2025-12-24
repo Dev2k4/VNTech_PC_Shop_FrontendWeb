@@ -66,12 +66,21 @@ const ProfilePage = () => {
 
   const handleUpdateInfo = async (formData) => {
     try {
+      let formattedDob = null;
+      if (formData.dateOfBirth) {
+         // Input type="date" always returns yyyy-mm-dd
+         if (formData.dateOfBirth.includes('-')) {
+             const [year, month, day] = formData.dateOfBirth.split('-');
+             formattedDob = `${day}-${month}-${year}`;
+         } else {
+             formattedDob = formData.dateOfBirth;
+         }
+      }
+
       const payload = {
         ...user,
         ...formData,
-        dateOfBirth: formData.dateOfBirth
-          ? new Date(formData.dateOfBirth).toISOString()
-          : null,
+        dateOfBirth: formattedDob,
       };
       await UserService.updateProfile(payload);
       toast({ title: "Đã lưu thay đổi", status: "success" });
