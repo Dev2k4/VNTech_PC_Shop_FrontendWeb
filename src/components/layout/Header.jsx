@@ -197,7 +197,7 @@ const handleSearch = () => {
                   <HStack spacing={2}>
                     <Avatar 
                         size="sm" 
-                        name={user.name} // Avatar sẽ tự lấy chữ cái đầu của Email nếu Name là Email
+                        name={user.name} 
                         src={`https://ui-avatars.com/api/?name=${user.name}&background=0D8ABC&color=fff`}
                         border="2px solid" borderColor="blue.500"
                     />
@@ -222,9 +222,16 @@ const handleSearch = () => {
                 </MenuList>
               </Menu>
             ) : (
+              <Flex>
+                <Button as={Link} to="/register" size="sm" variant="brand" leftIcon={<FaUser />} borderRadius="full" px={6}>
+                    Đăng ký
+                </Button>
                 <Button as={Link} to="/login" size="sm" variant="brand" leftIcon={<FaUser />} borderRadius="full" px={6}>
                     Đăng nhập
                 </Button>
+                
+              </Flex>
+                
             )}
           </HStack>
           <Button 
