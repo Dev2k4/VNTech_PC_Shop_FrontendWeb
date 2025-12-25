@@ -12,6 +12,8 @@ import ProductCard from '../components/ProductCard';
 import Pagination from '../../../components/common/Pagination';
 import FilterSidebar from '../components/FilterSidebar';
 
+import NoResults from '../../../components/common/NoResults';
+
 const ProductListPage = () => {
     // --- STATE ---
     const [products, setProducts] = useState([]);
@@ -25,7 +27,7 @@ const ProductListPage = () => {
     // Pagination
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-
+    
     // Filter State
     const [filters, setFilters] = useState({
         minPrice: 0,
@@ -165,11 +167,11 @@ const ProductListPage = () => {
                         {loading ? (
                             <Flex justify="center" py={20}><Spinner size="xl" color="blue.500" thickness="4px" /></Flex>
                         ) : products.length === 0 ? (
-                            <Box textAlign="center" py={20} bg={useColorModeValue("white", "gray.800")} borderRadius="xl" border="1px dashed" borderColor="gray.200">
-                                <Icon as={FaSearchMinus} w={16} h={16} color="gray.400" mb={4} />
-                                <Text fontSize="xl" color="gray.500" mb={4}>Không tìm thấy sản phẩm nào phù hợp.</Text>
-                                <Button colorScheme="blue" variant="outline" onClick={handleClearAll}>Xóa bộ lọc & Tìm kiếm</Button>
-                            </Box>
+                            <NoResults 
+                                title={keyword ? `Không tìm thấy cho "${keyword}"` : "Không có sản phẩm nào"}
+                                message="Thử xóa bộ lọc hoặc tìm kiếm với từ khóa khác xem sao nhé."
+                                onReset={handleClearAll}
+                            />
                         ) : (
                             <>
                                 <Grid templateColumns={{ base: "1fr", sm: "1fr 1fr", lg: "repeat(3, 1fr)", xl: "repeat(4, 1fr)" }} gap={6}>

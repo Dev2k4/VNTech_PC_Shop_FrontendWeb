@@ -15,6 +15,7 @@ import { useCart } from "../../../context/CartContext";
 import SpecificationTable from "../components/SpecificationTable";
 import ReviewList from "../components/ReviewList";
 import ReviewModal from "../components/ReviewModal";
+import ReviewStats from "../components/ReviewStats";
 
 const FeatureItem = ({ icon, text }) => (
     <HStack spacing={3} align="center">
@@ -31,6 +32,9 @@ const ProductDetailPage = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [canReview, setCanReview] = useState(false); // State check quyền review
   
+  const [reviews, setReviews] = useState([]);
+  const [reviewSummary, setReviewSummary] = useState(null);
+
   const { addToCart } = useCart();
   const { isOpen, onOpen, onClose } = useDisclosure(); // Modal control
   const toast = useToast();
@@ -55,19 +59,41 @@ const ProductDetailPage = () => {
     }
   };
 
+  const fetchReviews = async () => {
+    try {
+        const res = await ReviewService.getProductReviews(id);
+        // Kiểm tra cấu trúc response từ backend
+        if (res && res.content) {
+            setReviews(res.content);
+        } else if (res && res.data && res.data.content) {
+             setReviews(res.data.content);
+        } else {
+            setReviews([]);
+        }
+    } catch (error) {
+        console.error("Error fetching reviews:", error);
+    }
+  };
+
+  const fetchReviewSummary = async () => {
+    try {
+        const res = await ReviewService.getProductReviewSummary(id);
+        if (res) {
+           setReviewSummary(res);
+        }
+    } catch (error) {
+        console.error("Error fetching review summary", error);
+    }
+  };
+
   // Check xem user có được review không
   const checkReviewPermission = async () => {
       const token = localStorage.getItem('accessToken');
       if (!token) return;
       try {
           const res = await ReviewService.checkCanReview(id);
-          // Giả sử API trả về data: { canReview: true } hoặc boolean trực tiếp
-          // Swagger bạn gửi return object, mình check trường hợp phổ biến
-          if (res.success) {
-              // Tuỳ vào response BE trả về gì, cứ log ra xem trước
-              // Ở đây mình giả định BE trả về true/false trong data
-              setCanReview(res.data); 
-          }
+          // Backend trả về true/false trực tiếp hoặc trong object
+          setCanReview(res); 
       } catch (error) {
           console.log("User cannot review");
       }
@@ -75,6 +101,8 @@ const ProductDetailPage = () => {
 
   useEffect(() => {
     fetchProduct();
+    fetchReviews();
+    fetchReviewSummary();
     checkReviewPermission();
   }, [id]);
 
@@ -173,7 +201,9 @@ const ProductDetailPage = () => {
             </Grid>
 
             {/* Details & Reviews */}
-            <Grid templateColumns={{ base: "1fr", lg: "1.5fr 1fr" }} gap={12} borderTop="1px solid" borderColor={borderColor} pt={16}>
+            {/* Details & Reviews */}
+            <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap={12} borderTop="1px solid" borderColor={borderColor} pt={16}>
+               {/* Left Column: Description & Specs */}
               <Box>
                 <Heading size="lg" mb={6}>Thông số kỹ thuật</Heading>
                 <SpecificationTable specifications={product.specifications} />
@@ -183,21 +213,38 @@ const ProductDetailPage = () => {
                 </Box>
               </Box>
 
-              <Box>
-                <Flex justify="space-between" align="center" mb={6}>
-                    <Heading size="lg">Đánh giá</Heading>
+              {/* Right Column: Can be used for something else or left empty, 
+                  but for now let's just make the left column take up more space or 
+                  remove the grid if we want full width. 
+                  User asked for "review below description".
+                  So I will close the Grid here and start a new Box for reviews.
+               */}
+            </Grid>
+
+            {/* REVIEW SECTION BELOW */}
+            <Box mt={16} borderTop="1px solid" borderColor={borderColor} pt={10}>
+                <Flex justify="space-between" align="center" mb={8}>
+                    <Heading size="lg">Đánh giá & Nhận xét</Heading>
                     {canReview && (
-                        <Button size="sm" colorScheme="green" onClick={onOpen}>Viết đánh giá</Button>
+                        <Button size="md" colorScheme="blue" onClick={onOpen}>Viết đánh giá</Button>
                     )}
                 </Flex>
-                
-                {/* List Review - Bạn cần truyền list review vào đây nếu product có field reviews, 
-                    nếu không phải gọi API lấy list review riêng */}
-                <ReviewList reviews={[]} /> 
-                {/* Lưu ý: Nếu object product không chứa reviews, bạn cần gọi API getReviews trong useEffect và truyền vào đây */}
 
-              </Box>
-            </Grid>
+                <Grid templateColumns={{ base: "1fr", lg: "1fr 2fr" }} gap={10}>
+                    {/* Summary Stats */}
+                    <Box>
+                        {reviewSummary && <ReviewStats summary={reviewSummary} />}
+                    </Box>
+
+                    {/* Review List */}
+                    <Box>
+                        <ReviewList reviews={reviews} />
+                        {reviews.length === 0 && !loading && (
+                            <Text textAlign="center" color="gray.500" mt={4}>Chưa có đánh giá nào.</Text>
+                        )}
+                    </Box>
+                </Grid>
+            </Box>
         </Container>
 
         {/* REVIEW MODAL */}
@@ -206,8 +253,9 @@ const ProductDetailPage = () => {
             onClose={onClose} 
             productId={product.id} 
             onSuccess={() => {
-                fetchProduct(); // Reload lại sản phẩm để cập nhật rating
-                checkReviewPermission(); // Check lại quyền (thường review xong sẽ mất quyền review tiếp)
+                fetchReviews(); 
+                fetchReviewSummary(); 
+                checkReviewPermission(); 
             }} 
         />
     </Box>
