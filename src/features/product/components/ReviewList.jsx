@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, Heading, Text, VStack, Button, HStack, Divider, Flex, useColorModeValue, Avatar } from "@chakra-ui/react";
-import { StarIcon } from "@chakra-ui/icons";
+import { Box, Heading, Text, VStack, Button, HStack, Divider, Flex, useColorModeValue, Avatar, Badge } from "@chakra-ui/react";
+import { StarIcon, CheckCircleIcon } from "@chakra-ui/icons";
 import { formatDate } from "../../../utils/format";
 
 const ReviewList = ({ reviews }) => {
@@ -11,7 +11,7 @@ const ReviewList = ({ reviews }) => {
 
   if (!reviews || reviews.length === 0) {
     return (
-      <Box bg={cardBg} p={8} borderRadius="2xl" border="1px solid" borderColor={borderColor} textAlign="center">
+      <Box bg={cardBg} p={8} borderRadius="2xl" border="1px solid" borderColor={borderColor} textAlign="center" mt={6}>
         <Heading size="md" mb={2} color={textColor}>Chưa có đánh giá nào</Heading>
         <Text color={subTextColor} mb={4}>Hãy là người đầu tiên đánh giá sản phẩm này!</Text>
       </Box>
@@ -19,24 +19,28 @@ const ReviewList = ({ reviews }) => {
   }
 
   return (
-    <Box bg={cardBg} p={8} borderRadius="2xl" border="1px solid" borderColor={borderColor}>
-      <Heading size="lg" mb={6} color={textColor}>Đánh giá từ khách hàng ({reviews.length})</Heading>
+    <Box mt={8}>
       <VStack align="stretch" spacing={6}>
         {reviews.map((review, index) => (
           <Box key={index} borderBottom={index < reviews.length - 1 ? "1px solid" : "none"} borderColor={borderColor} pb={6}>
             <Flex justify="space-between" align="flex-start" mb={2}>
                 <HStack spacing={3}>
-                    <Avatar size="sm" name={review.user?.username} bg="blue.500" />
+                    <Avatar size="sm" name={review.user?.fullName} src={review.user?.avatar} bg="blue.500" />
                     <Box>
-                        <Text fontWeight="bold" color={textColor} fontSize="sm">{review.user?.username || "Người dùng"}</Text>
-                        <HStack spacing={0.5} color="yellow.400" fontSize="xs">
-                            {[...Array(5)].map((_, i) => <StarIcon key={i} color={i < review.rating ? "yellow.400" : "gray.600"} />)}
+                        <HStack>
+                            <Text fontWeight="bold" color={textColor} fontSize="sm">{review.user?.fullName || "Người dùng ẩn danh"}</Text>
+                            {review.verifiedPurchase && (
+                                <Badge colorScheme="green" fontSize="0.7em" variant="subtle">Đã mua hàng <Icon as={CheckCircleIcon} ml={1}/></Badge>
+                            )}
+                        </HStack>
+                        <HStack spacing={0.5} pt={1}>
+                            {[...Array(5)].map((_, i) => <StarIcon key={i} w={3} h={3} color={i < review.rating ? "yellow.400" : "gray.300"} />)}
                         </HStack>
                     </Box>
                 </HStack>
                 <Text fontSize="xs" color="gray.500">{formatDate(review.createdAt)}</Text>
             </Flex>
-            <Text color={subTextColor} fontSize="sm" mt={2} pl={10}>
+            <Text color={textColor} fontSize="sm" mt={2} pl={12} lineHeight="tall">
               {review.comment}
             </Text>
           </Box>
@@ -45,5 +49,6 @@ const ReviewList = ({ reviews }) => {
     </Box>
   );
 };
+import { Icon } from "@chakra-ui/react";
 
 export default ReviewList;
