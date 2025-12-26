@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { 
     Box, Container, Heading, Image, Text, IconButton, Button, 
-    Flex, Divider, useToast, useColorModeValue, VStack, HStack, Icon, Badge, Checkbox, Spinner
+    Flex, Divider, useToast, useColorModeValue, VStack, HStack, Icon, Badge, Checkbox, Spinner,
+    Input, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, useDisclosure
 } from '@chakra-ui/react';
 import { AddIcon, MinusIcon, DeleteIcon, ArrowBackIcon } from '@chakra-ui/icons';
 import { FaCreditCard, FaTruck, FaTrash } from 'react-icons/fa';
@@ -18,6 +19,9 @@ const CartPage = () => {
     const [loading, setLoading] = useState(true);
     const { fetchCartCount } = useCart();
     const toast = useToast();
+
+    // Modal state cho chức năng xóa tất cả
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
     // New State for Shipping
     const [defaultAddress, setDefaultAddress] = useState(null);
@@ -88,7 +92,7 @@ const CartPage = () => {
         getShippingFee();
     }, [defaultAddress, cart?.selectedItemsPrice]);
 
-    // Xử lý tăng giảm số lượng
+    // Xử lý tăng giảm số lượng (Nút bấm)
     const handleUpdateQuantity = async (itemId, newQuantity) => {
         if (newQuantity < 1) return;
         try {
@@ -96,6 +100,19 @@ const CartPage = () => {
             fetchCart(); // Load lại để tính lại tiền
         } catch (error) {
             toast({ title: 'Lỗi', description: 'Không thể cập nhật số lượng', status: 'error' });
+        }
+    };
+
+    // Xử lý nhập tay số lượng (Input)
+    const handleInputQuantity = (e, itemId, currentQuantity) => {
+        const val = parseInt(e.target.value);
+        // Chỉ gọi API nếu giá trị hợp lệ và khác giá trị cũ
+        if (!isNaN(val) && val > 0 && val !== currentQuantity) {
+            handleUpdateQuantity(itemId, val);
+        } else {
+            // Nếu nhập sai (trống, số âm, chữ...) -> Reset lại giao diện bằng cách gọi lại fetchCart
+            // hoặc đơn giản là force update lại input về giá trị cũ
+            if (val !== currentQuantity) fetchCart();
         }
     };
 
@@ -107,6 +124,24 @@ const CartPage = () => {
             fetchCart();
         } catch (error) {
             toast({ title: 'Lỗi', description: 'Không thể xóa sản phẩm', status: 'error' });
+        }
+    };
+
+    // Xử lý xóa tất cả (Được gọi khi bấm Xác nhận ở Modal)
+    const handleConfirmClearCart = async () => {
+        try {
+            // Kiểm tra service có hàm clearCart không, nếu chưa có thì dùng loop
+            if (CartService.clearCart) {
+                await CartService.clearCart();
+            } else {
+                // Fallback nếu chưa config API clearCart
+                await Promise.all(cart.cartItems.map(item => CartService.removeItem(item.id)));
+            }
+            toast({ title: 'Đã xóa sạch giỏ hàng', status: 'success' });
+            fetchCart();
+            onClose();
+        } catch (error) {
+            toast({ title: 'Lỗi', description: 'Không thể xóa giỏ hàng', status: 'error' });
         }
     };
 
@@ -163,52 +198,66 @@ const CartPage = () => {
                                 >
                                     Tất cả ({cart.totalItems} sản phẩm)
                                 </Checkbox>
-                                <Icon as={FaTrash} color="gray.400" cursor="pointer" ml="auto" />
+                                {/* Nút Xóa tất cả mở Modal */}
+                                <Icon as={FaTrash} color="gray.400" cursor="pointer" ml="auto" onClick={onOpen} />
                             </Flex>
 
                             <VStack spacing={4} align="stretch">
                                 {cart.cartItems.map((item) => (
                                     <Flex key={item.id} bg={cardBg} p={4} borderRadius="xl" align="center" border="1px solid" borderColor={borderColor}>
-                                        <Checkbox 
-                                            isChecked={item.selected} 
-                                            onChange={(e) => handleSelectItem(item.id, e.target.checked)}
-                                            colorScheme="blue" 
-                                            mr={4}
-                                        />
-                                        
-                                        <Image 
-                                            src={item.product.mainImage} 
-                                            alt={item.product.productName}
-                                            boxSize="80px" 
-                                            objectFit="contain" 
-                                            mr={4} 
-                                            borderRadius="md"
-                                            bg="white"
-                                        />
-                                        
-                                        <Box flex="1">
-                                            <Text fontWeight="bold" noOfLines={2} color={textColor}>{item.product.productName}</Text>
-                                            <Text fontSize="sm" color="gray.500">{item.product.model}</Text>
-                                            <Text fontWeight="bold" color="blue.500" mt={1}>{formatCurrency(item.price)}</Text>
-                                        </Box>
-
-                                        <Flex align="center" border="1px solid" borderColor="gray.200" borderRadius="md">
-                                            <IconButton 
-                                                icon={<MinusIcon />} size="xs" variant="ghost" 
-                                                onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                            <Checkbox 
+                                                isChecked={item.selected} 
+                                                onChange={(e) => handleSelectItem(item.id, e.target.checked)}
+                                                colorScheme="blue" 
+                                                mr={4}
                                             />
-                                            <Text px={2} fontSize="sm" fontWeight="bold">{item.quantity}</Text>
-                                            <IconButton 
-                                                icon={<AddIcon />} size="xs" variant="ghost" 
-                                                onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                            
+                                            <Image 
+                                                src={item.product.mainImage} 
+                                                alt={item.product.productName}
+                                                boxSize="80px" 
+                                                objectFit="contain" 
+                                                mr={4} 
+                                                borderRadius="md"
+                                                bg="white"
                                             />
-                                        </Flex>
+                                            
+                                            <Box flex="1">
+                                                <Text fontWeight="bold" noOfLines={2} color={textColor}>{item.product.productName}</Text>
+                                                <Text fontSize="sm" color="gray.500">{item.product.model}</Text>
+                                                <Text fontWeight="bold" color="blue.500" mt={1}>{formatCurrency(item.price)}</Text>
+                                            </Box>
 
-                                        <IconButton 
-                                            icon={<DeleteIcon />} 
-                                            variant="ghost" colorScheme="red" ml={4}
-                                            onClick={() => handleRemoveItem(item.id)}
-                                        />
+                                            <Flex align="center" border="1px solid" borderColor="gray.200" borderRadius="md">
+                                                <IconButton 
+                                                    icon={<MinusIcon />} size="xs" variant="ghost" 
+                                                    onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                                                />
+                                                {/* INPUT NHẬP TAY SỐ LƯỢNG */}
+                                                <Input 
+                                                    size="xs" 
+                                                    w="40px" 
+                                                    textAlign="center" 
+                                                    border="none" 
+                                                    defaultValue={item.quantity}
+                                                    key={item.quantity} // Key giúp reset khi API update xong
+                                                    onBlur={(e) => handleInputQuantity(e, item.id, item.quantity)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleInputQuantity(e, item.id, item.quantity);
+                                                    }}
+                                                    _focus={{ boxShadow: "none" }}
+                                                />
+                                                <IconButton 
+                                                    icon={<AddIcon />} size="xs" variant="ghost" 
+                                                    onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                                                />
+                                            </Flex>
+
+                                            <IconButton 
+                                                icon={<DeleteIcon />} 
+                                                variant="ghost" colorScheme="red" ml={4}
+                                                onClick={() => handleRemoveItem(item.id)}
+                                            />
                                     </Flex>
                                 ))}
                             </VStack>
@@ -256,14 +305,28 @@ const CartPage = () => {
                                 >
                                     MUA HÀNG ({cart.selectedItems})
                                 </Button>
-                                
-                                <HStack justify="center" mt={4} spacing={4} color="gray.500">
-                                    <Icon as={FaTruck} /><Text fontSize="xs">Freeship toàn quốc</Text>
-                                </HStack>
+                             
                             </Box>
                         </Box>
                     </Flex>
                 )}
+
+                {/* MODAL XÁC NHẬN XÓA TẤT CẢ */}
+                <Modal isOpen={isOpen} onClose={onClose} isCentered>
+                    <ModalOverlay backdropFilter="blur(5px)" />
+                    <ModalContent bg={cardBg} color={textColor}>
+                        <ModalHeader>Xác nhận xóa</ModalHeader>
+                        <ModalCloseButton />
+                        <ModalBody>
+                            Bạn có chắc chắn muốn xóa toàn bộ sản phẩm trong giỏ hàng không?
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button variant="ghost" mr={3} onClick={onClose}>Hủy</Button>
+                            <Button colorScheme="red" onClick={handleConfirmClearCart}>Xóa tất cả</Button>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
+
             </Container>
         </Box>
     );

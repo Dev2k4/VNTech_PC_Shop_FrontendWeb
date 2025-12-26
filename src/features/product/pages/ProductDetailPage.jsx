@@ -167,7 +167,6 @@ const ProductDetailPage = () => {
                         <FeatureItem icon={CheckCircleIcon} text="Hàng chính hãng 100%" />
                         <FeatureItem icon={FaShippingFast} text="Giao hàng siêu tốc 2H" />
                         <FeatureItem icon={FaShieldAlt} text="Bảo hành tận nơi 12T" />
-                        <FeatureItem icon={CheckCircleIcon} text="Lỗi 1 đổi 1 trong 30 ngày" />
                     </SimpleGrid>
                 </VStack>
             </Grid>

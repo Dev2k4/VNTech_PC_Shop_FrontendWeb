@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 import { useCart } from "../../context/CartContext";
 import AuthService from "../../services/auth.service";
-
+import CategoryMenu from './CategoryMenu'
 const Header = () => {
   const { cartCount } = useCart();
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,8 +23,6 @@ const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
 const handleSearch = () => {
     if (searchTerm.trim()) {
-        // Chuyển hướng sang trang /products kèm tham số search
-        // encodeURIComponent để xử lý các ký tự đặc biệt (dấu cách, tiếng việt)
         navigate(`/products?search=${encodeURIComponent(searchTerm)}`);
     }
   };
@@ -49,22 +47,13 @@ const handleSearch = () => {
     const checkUserLogin = () => {
       const token = localStorage.getItem("accessToken");
       const role = localStorage.getItem("role");
-      
-      // Lấy cả Tên và Email từ LocalStorage
       const storedName = localStorage.getItem("userName");
       const storedEmail = localStorage.getItem("userEmail"); // Cần đảm bảo Login đã lưu cái này
-
-      // Logic chọn tên hiển thị:
-      // 1. Nếu có Tên và không phải "undefined/null" -> Dùng Tên
-      // 2. Nếu không -> Dùng Email
-      // 3. Nếu không nốt -> Dùng "Member"
       let displayName = "Member";
 
       if (storedName && storedName !== "undefined" && storedName !== "null" && storedName.trim() !== "") {
           displayName = storedName;
       } else if (storedEmail && storedEmail !== "undefined" && storedEmail !== "null") {
-          // Nếu dùng email, cắt lấy phần trước @ cho gọn (Option)
-          // displayName = storedEmail.split('@')[0]; 
           displayName = storedEmail;
       }
 
@@ -91,7 +80,6 @@ const handleSearch = () => {
     } catch (e) {} 
     localStorage.clear();
     setUser(null);
-    // Dispatch event để update lại UI ngay lập tức
     window.dispatchEvent(new Event("auth-change"));
     navigate("/login");
   };
@@ -112,7 +100,6 @@ const handleSearch = () => {
     >
       <Container maxW="container.xl" px={{ base: 4, md: 6 }}>
         <Flex h="70px" align="center" justify="space-between">
-          
           {/* 1. LOGO & MOBILE MENU */}
           <Flex align="center" gap={4}>
             <IconButton
@@ -122,7 +109,6 @@ const handleSearch = () => {
               color={iconColor}
               aria-label="Menu"
             />
-            
             <ChakraLink as={Link} to="/" _hover={{ textDecoration: 'none' }} group>
               <HStack spacing={2}>
                 <Icon as={FaMicrochip} w={8} h={8} color="blue.500" />
@@ -134,8 +120,14 @@ const handleSearch = () => {
                         STORE
                     </Text>
                 </Box>
+                
               </HStack>
+              
             </ChakraLink>
+            <HStack spacing={4} display={{ base: 'none', md: 'flex' }}>
+                 <CategoryMenu /> 
+                 {/* Các link khác nếu muốn */}
+             </HStack>
           </Flex>
 
           {/* 2. SEARCH BAR */}
@@ -156,7 +148,6 @@ const handleSearch = () => {
         onKeyDown={(e) => {
             if (e.key === 'Enter') handleSearch();
         }}
-        // ----------------------------
     />
     <InputRightElement>
         <IconButton 
@@ -166,7 +157,7 @@ const handleSearch = () => {
             color="blue.500" 
             borderRadius="full" 
             aria-label="Search"
-            onClick={handleSearch} // Bắt sự kiện click
+            onClick={handleSearch} 
         />
     </InputRightElement>
   </InputGroup>
@@ -197,7 +188,7 @@ const handleSearch = () => {
                   <HStack spacing={2}>
                     <Avatar 
                         size="sm" 
-                        name={user.name} // Avatar sẽ tự lấy chữ cái đầu của Email nếu Name là Email
+                        name={user.name} 
                         src={`https://ui-avatars.com/api/?name=${user.name}&background=0D8ABC&color=fff`}
                         border="2px solid" borderColor="blue.500"
                     />
@@ -222,9 +213,16 @@ const handleSearch = () => {
                 </MenuList>
               </Menu>
             ) : (
+              <Flex>
+                <Button as={Link} to="/register" size="sm" variant="brand" leftIcon={<FaUser />} borderRadius="full" px={6}>
+                    Đăng ký
+                </Button>
                 <Button as={Link} to="/login" size="sm" variant="brand" leftIcon={<FaUser />} borderRadius="full" px={6}>
                     Đăng nhập
                 </Button>
+                
+              </Flex>
+                
             )}
           </HStack>
           <Button 

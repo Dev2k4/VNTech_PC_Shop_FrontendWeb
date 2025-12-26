@@ -14,7 +14,6 @@ const OrderPaymentSummary = ({ order, onCancel }) => {
             <Flex justify="space-between" mb={2}><Text color="gray.500">Tạm tính</Text><Text color={textColor}>{formatCurrency(order.totalPrice)}</Text></Flex>
             <Flex justify="space-between" mb={2}><Text color="gray.500">Vận chuyển</Text><Text color={textColor}>{formatCurrency(order.shippingFee)}</Text></Flex>
             <Flex justify="space-between" mt={4}><Heading size="md" color={textColor}>Tổng cộng</Heading><Heading size="md" color="blue.400">{formatCurrency(order.finalPrice)}</Heading></Flex>
-            {order.canBeCancelled && <Button colorScheme="red" w="full" mt={6} onClick={onCancel}>Hủy đơn hàng</Button>}
         </Box>
     );
 };

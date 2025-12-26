@@ -18,7 +18,12 @@ axiosClient.interceptors.request.use(async (config) => {
 axiosClient.interceptors.response.use((response) => {
     return response.data; 
 }, (error) => {
+    const { response } = error;
+    if (response && response.status === 401) {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');  
+        window.location.href = '/login';
+    }
     return Promise.reject(error);
 });
-
 export default axiosClient;

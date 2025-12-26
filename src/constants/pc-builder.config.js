@@ -1,64 +1,62 @@
 import { FaMicrochip, FaMemory, FaHdd, FaDesktop, FaPlug, FaFan } from 'react-icons/fa';
 import { BsGpuCard, BsMotherboard } from 'react-icons/bs';
 
-// 🔥 QUAN TRỌNG: Bạn hãy vào Database, xem bảng `categories` 
-// và điền ID thực tế của từng loại linh kiện vào đây nhé!
 export const BUILD_SLOTS = [
     { 
         key: 'cpu', 
         name: 'Vi xử lý (CPU)', 
-        categoryId: 1, // Sửa số này theo DB của bạn
+        categoryKeyword: 'CPU', // Tìm tất cả danh mục có chữ "CPU"
         icon: FaMicrochip, 
         required: true,
-        checkKey: 'Socket' // Key trong specifications để check tương thích
+        checkKey: 'Socket' 
     },
     { 
         key: 'mainboard', 
-        name: 'Bo mạch chủ (Mainboard)', 
-        categoryId: 2, 
+        name: 'Bo mạch chủ', 
+        categoryKeyword: 'Mainboard', // Tìm tất cả danh mục có chữ "Mainboard"
         icon: BsMotherboard, 
         required: true,
         checkKey: 'Socket' 
     },
     { 
         key: 'ram', 
-        name: 'Bộ nhớ trong (RAM)', 
-        categoryId: 3, 
+        name: 'RAM', 
+        categoryKeyword: 'RAM', 
         icon: FaMemory, 
         required: true 
     },
     { 
         key: 'vga', 
-        name: 'Card màn hình (VGA)', 
-        categoryId: 4, 
+        name: 'VGA', 
+        categoryKeyword: 'VGA', // Hoặc 'Card' tùy tên trong DB bạn
         icon: BsGpuCard, 
         required: false 
     },
     { 
         key: 'ssd', 
-        name: 'Ổ cứng (SSD/HDD)', 
-        categoryId: 5, 
+        name: 'Ổ cứng SSD', 
+        categoryKeyword: 'SSD', 
         icon: FaHdd, 
         required: true 
     },
     { 
         key: 'psu', 
-        name: 'Nguồn (PSU)', 
-        categoryId: 6, 
+        name: 'Nguồn', 
+        categoryKeyword: 'Nguồn', 
         icon: FaPlug, 
         required: true 
     },
     { 
         key: 'case', 
-        name: 'Vỏ máy tính (Case)', 
-        categoryId: 7, 
+        name: 'Vỏ Case', 
+        categoryKeyword: 'Case', // Hoặc 'Vỏ'
         icon: FaDesktop, 
         required: true 
     },
     { 
-        key: 'cooling', 
+        key: 'cooler', 
         name: 'Tản nhiệt', 
-        categoryId: 8, 
+        categoryKeyword: 'Tản', 
         icon: FaFan, 
         required: false 
     }
