@@ -15,7 +15,7 @@ const AdminService = {
     createProduct: (data) => axiosClient.post('/admin/products', data),
     updateProduct: (id, data) => axiosClient.put(`/admin/products/${id}`, data),
     deleteProduct: (id) => axiosClient.delete(`/admin/products/${id}`),
-    
+
     // API ẢNH SẢN PHẨM (MỚI)
     uploadMultipleImages: (productId, files) => {
         const formData = new FormData();

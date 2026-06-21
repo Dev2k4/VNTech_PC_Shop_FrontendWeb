@@ -11,11 +11,16 @@ import { FaCloudUploadAlt, FaTrash } from "react-icons/fa";
 import ProductService from "../../../services/product.service";
 import AdminService from "../../../services/admin.service";
 import { formatCurrency } from "../../../utils/format";
+import Pagination from "../../../components/common/Pagination"; // Import Pagination
 
 const AdminProductPage = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(0); // 0-indexed
+  const [totalPages, setTotalPages] = useState(0);
+  const pageSize = 10;
+  
   
   // State quản lý Form
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -48,10 +53,13 @@ const AdminProductPage = () => {
     setLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([
-        ProductService.getAll({ size: 100 }), // Lấy tạm 100 sp
+        ProductService.getAll({ page: currentPage, size: pageSize }), 
         ProductService.getCategories()
       ]);
-      if (prodRes.success) setProducts(prodRes.data.content);
+      if (prodRes.success) {
+          setProducts(prodRes.data.content);
+          setTotalPages(prodRes.data.totalPages);
+      }
       if (catRes.success) setCategories(catRes.data);
     } catch (error) {
       toast({ title: "Lỗi tải dữ liệu", status: "error" });
@@ -60,7 +68,7 @@ const AdminProductPage = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [currentPage]); // Re-fetch when page changes
 
   // --- HANDLERS ---
   const handleOpenCreate = () => {
@@ -245,6 +253,16 @@ const AdminProductPage = () => {
             ))}
           </Tbody>
         </Table>
+
+      </Box>
+
+      {/* PAGINATION */}
+      <Box mt={4}>
+        <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+        />
       </Box>
 
       {/* MODAL FORM SUPER VIP */}

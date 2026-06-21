@@ -9,6 +9,7 @@ import { FaCartPlus, FaShippingFast, FaShieldAlt, FaRocket } from "react-icons/f
 
 import ProductService from "../../../services/product.service";
 import ReviewService from "../../../services/review.service";
+import AuthService from "../../../services/auth.service";
 import { formatCurrency } from "../../../utils/format";
 import { useCart } from "../../../context/CartContext";
 import SpecificationTable from "../components/SpecificationTable";
@@ -44,6 +45,7 @@ const ProductDetailPage = () => {
     const [reviews, setReviews] = useState([]);
     const [reviewSummary, setReviewSummary] = useState(null);
     const [canReview, setCanReview] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null);
     
     // Pagination State for Reviews
     const [page, setPage] = useState(0); 
@@ -63,6 +65,7 @@ const ProductDetailPage = () => {
                 fetchReviewSummary();
                 fetchReviews(0); // Load trang đầu
                 checkReviewPermission();
+                fetchCurrentUser();
             }
         } catch (error) {
             toast({ title: "Lỗi tải sản phẩm", status: "error" });
@@ -117,6 +120,19 @@ const ProductDetailPage = () => {
         }
     };
 
+    // Fetch Current User
+    const fetchCurrentUser = async () => {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+            try {
+                const res = await AuthService.getProfile();
+                if (res.success) {
+                    setCurrentUser(res.data);
+                }
+            } catch (e) { console.error("Logged in but failed to get profile", e); }
+        }
+    };
+
     useEffect(() => {
         fetchProductData();
     }, [fetchProductData]);
@@ -143,9 +159,19 @@ const ProductDetailPage = () => {
         // Refresh lại dữ liệu sau khi đánh giá
         fetchReviewSummary();
         fetchReviews(0);
-        checkReviewPermission(); // Thường đánh giá xong sẽ mất quyền đánh giá tiếp
-        // Có thể reload product để cập nhật rating chung nếu cần thiết
-        // product.rating = ... (tùy backend có trả về updated rating ko)
+        checkReviewPermission(); 
+    };
+
+    const handleDeleteReview = async (reviewId) => {
+        try {
+            await ReviewService.deleteReview(reviewId);
+            toast({ title: "Đã xóa đánh giá", status: "success" });
+            fetchReviews(page); 
+            fetchReviewSummary();
+            checkReviewPermission();
+        } catch (error) {
+            toast({ title: "Lỗi xóa đánh giá", status: "error" });
+        }
     };
 
     if (loading || !product) return <Flex justify="center" py={20}><Spinner size="xl" color="blue.500"/></Flex>;
@@ -216,15 +242,9 @@ const ProductDetailPage = () => {
                         </SimpleGrid>
                     </VStack>
                 </Grid>
-
-                {/* --- DETAILS & REVIEWS SECTION --- */}
-                {/* Changed layout: Stacked instead of side-by-side on large screens primarily, but grid is okay.
-                    User requested review below description. So I will change grid to single column or stack them.
-                */}
-                
                 <Box borderTop="1px solid" borderColor={borderColor} pt={10}>
                     {/* 1. Description & Specs */}
-                    <Grid templateColumns={{ base: "1fr", lg: "2fr 1fr" }} gap={12} mb={16}>
+                    <Grid templateColumns={{ base: "1fr", lg: "2fr 1.6fr" }} gap={12} mb={16}>
                         <Box>
                             <Heading size="lg" mb={6}>Mô tả chi tiết</Heading>
                             <Text color="gray.500" lineHeight="1.8" whiteSpace="pre-line" fontSize="md">
@@ -259,7 +279,7 @@ const ProductDetailPage = () => {
                                 <Flex justify="center" py={10}><Spinner color="blue.500" /></Flex>
                             ) : (
                                 <>
-                                    <ReviewList reviews={reviews} />
+                                    <ReviewList reviews={reviews} currentUser={currentUser} onDelete={handleDeleteReview} />
                                     {/* Pagination */}
                                     <Box mt={6} display="flex" justifyContent="flex-end">
                                         <Pagination 

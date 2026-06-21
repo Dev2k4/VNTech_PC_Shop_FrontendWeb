@@ -16,8 +16,8 @@ const SpecificationTable = ({ specifications }) => {
         <Tbody>
           {specifications.map((spec, index) => (
             <Tr key={index} bg={index % 2 === 0 ? "transparent" : rowEvenBg}>
-              <Td w="30%" fontWeight="medium" color={subTextColor} borderBottomColor={borderColor}>{spec.keyName}</Td>
-              <Td w="70%" fontWeight="semibold" color={textColor} borderBottomColor={borderColor}>{spec.value}</Td>
+              <Td w="40%" fontWeight="medium" color={subTextColor} borderBottomColor={borderColor}>{spec.keyName}</Td>
+              <Td w="60%" fontWeight="semibold" color={textColor} borderBottomColor={borderColor}>{spec.value}</Td>
             </Tr>
           ))}
         </Tbody>

@@ -3,7 +3,7 @@ import { Box, Heading, Text, VStack, Button, HStack, Divider, Flex, useColorMode
 import { StarIcon, CheckCircleIcon } from "@chakra-ui/icons";
 import { formatDate } from "../../../utils/format";
 
-const ReviewList = ({ reviews }) => {
+const ReviewList = ({ reviews, currentUser, onDelete }) => {
   const cardBg = useColorModeValue("white", "vntech.cardBg");
   const borderColor = useColorModeValue("gray.200", "whiteAlpha.100");
   const textColor = useColorModeValue("gray.800", "white");
@@ -21,30 +21,50 @@ const ReviewList = ({ reviews }) => {
   return (
     <Box mt={8}>
       <VStack align="stretch" spacing={6}>
-        {reviews.map((review, index) => (
-          <Box key={index} borderBottom={index < reviews.length - 1 ? "1px solid" : "none"} borderColor={borderColor} pb={6}>
-            <Flex justify="space-between" align="flex-start" mb={2}>
-                <HStack spacing={3}>
-                    <Avatar size="sm" name={review.user?.fullName} src={review.user?.avatar} bg="blue.500" />
-                    <Box>
-                        <HStack>
-                            <Text fontWeight="bold" color={textColor} fontSize="sm">{review.user?.fullName || "Người dùng ẩn danh"}</Text>
-                            {review.verifiedPurchase && (
-                                <Badge colorScheme="green" fontSize="0.7em" variant="subtle">Đã mua hàng <Icon as={CheckCircleIcon} ml={1}/></Badge>
-                            )}
-                        </HStack>
-                        <HStack spacing={0.5} pt={1}>
-                            {[...Array(5)].map((_, i) => <StarIcon key={i} w={3} h={3} color={i < review.rating ? "yellow.400" : "gray.300"} />)}
-                        </HStack>
-                    </Box>
-                </HStack>
-                <Text fontSize="xs" color="gray.500">{formatDate(review.createdAt)}</Text>
-            </Flex>
-            <Text color={textColor} fontSize="sm" mt={2} pl={12} lineHeight="tall">
-              {review.comment}
-            </Text>
-          </Box>
-        ))}
+        {reviews.map((review, index) => {
+          const isOwner = currentUser && (currentUser.id === review.user?.id || currentUser.email === review.user?.email); // Check both for robustness
+          
+          return (
+            <Box key={index} borderBottom={index < reviews.length - 1 ? "1px solid" : "none"} borderColor={borderColor} pb={6}>
+              <Flex justify="space-between" align="flex-start" mb={2}>
+                  <HStack spacing={3}>
+                      <Avatar size="sm" name={review.user?.fullName} src={review.user?.avatar} bg="blue.500" />
+                      <Box>
+                          <HStack>
+                              <Text fontWeight="bold" color={textColor} fontSize="sm">{review.user?.fullName || "Người dùng ẩn danh"}</Text>
+                              {review.verifiedPurchase && (
+                                  <Badge colorScheme="green" fontSize="0.7em" variant="subtle">Đã mua hàng <Icon as={CheckCircleIcon} ml={1}/></Badge>
+                              )}
+                          </HStack>
+                          <HStack spacing={0.5} pt={1}>
+                              {[...Array(5)].map((_, i) => <StarIcon key={i} w={3} h={3} color={i < review.rating ? "yellow.400" : "gray.300"} />)}
+                          </HStack>
+                      </Box>
+                  </HStack>
+                  <HStack>
+                    <Text fontSize="xs" color="gray.500">{formatDate(review.createdAt)}</Text>
+                    {isOwner && onDelete && (
+                        <Button 
+                            size="xs" 
+                            colorScheme="red" 
+                            variant="ghost" 
+                            onClick={() => {
+                                if(window.confirm("Bạn có chắc muốn xóa đánh giá này?")) {
+                                    onDelete(review.id);
+                                }
+                            }}
+                        >
+                            Xóa
+                        </Button>
+                    )}
+                  </HStack>
+              </Flex>
+              <Text color={textColor} fontSize="sm" mt={2} pl={12} lineHeight="tall">
+                {review.comment}
+              </Text>
+            </Box>
+          );
+        })}
       </VStack>
     </Box>
   );
